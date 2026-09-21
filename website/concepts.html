@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Concepts — agentic</title>
+  <meta name="description" content="The ideas behind agentic: change, artifacts, status lifecycle, archiving, and the CLI + agent model." />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <header>
+    <div class="wrap nav">
+      <a class="brand" href="index.html">
+        <img class="logo-badge" src="assets/img/logo.png" alt="agentic logo" />
+        <span>AGENTIC</span>
+      </a>
+      <nav class="nav-links">
+        <a href="getting-started.html">Getting Started</a>
+        <a href="commands.html">Commands</a>
+        <a href="concepts.html" class="active">Concepts</a>
+        <a href="https://www.npmjs.com/package/@agentic-fy/agentic">npm</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="doc">
+      <div class="doc-head">
+        <div class="kicker">Understand it deeply</div>
+        <h1>Concepts</h1>
+        <p class="subtitle">The ideas behind agentic, from the change to archiving.</p>
+      </div>
+    </div>
+
+    <div class="doc-body">
+      <h2>The problem agentic solves</h2>
+      <p>When you work with an AI assistant, it's easy to ask for something vague and watch the AI confidently
+      build the wrong thing. agentic inserts a lightweight agreement layer: you and the AI write and review a
+      short plan before any code is written. The plan lives in the repository, next to the code, so it stays
+      useful months later.</p>
+
+      <h2>Change</h2>
+      <p>A <strong>change</strong> is the central unit of work. Whenever you want to add, modify, or remove
+      behavior, you create a change with <code>agentic propose &lt;name&gt;</code>. Each change is a folder in
+      <code>agentic/changes/&lt;name&gt;/</code> that gathers everything about that work:</p>
+      <pre><code>agentic/changes/add-dark-mode/
+├── proposal.md         # why and what
+├── design.md           # how
+├── tasks.md            # steps
+├── specs/
+│   └── spec.md         # requirements and acceptance criteria
+└── .agentic.yaml       # metadata: name, status, dates</code></pre>
+      <p>The name you pass is normalized to a disk-safe slug: <code>"Add Dark Mode"</code> becomes
+      <code>add-dark-mode</code>.</p>
+
+      <h2>Artifacts</h2>
+      <p>Each change contains four kinds of artifact, created in a natural order where each one feeds the
+      next:</p>
+      <table>
+        <thead>
+          <tr><th>Artifact</th><th>Question it answers</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>proposal.md</code></td><td>Why do this, and what changes?</td></tr>
+          <tr><td><code>specs/spec.md</code></td><td>What are the requirements and acceptance criteria?</td></tr>
+          <tr><td><code>design.md</code></td><td>How will it be built?</td></tr>
+          <tr><td><code>tasks.md</code></td><td>What are the concrete implementation steps?</td></tr>
+        </tbody>
+      </table>
+      <pre><code>proposal ──► specs ──► design ──► tasks ──► implement
+    why        what      how       steps      do it</code></pre>
+      <p>The <code>propose</code> command generates these files from templates. From there, you (or the AI)
+      fill them in with the real content. <code>tasks.md</code> uses Markdown checkboxes
+      (<code>- [ ]</code> / <code>- [x]</code>), which agentic understands to track progress.</p>
+
+      <h3>Enablers, not gates</h3>
+      <p>The order of the artifacts shows what becomes <em>possible</em> next, not what you're <em>forced</em>
+      to do. Discover during implementation that the design was wrong? Edit <code>design.md</code> and keep
+      going. Nothing locks. The dependencies exist only to give context — not to box you into a waterfall
+      process.</p>
+
+      <h2>Status and lifecycle</h2>
+      <p>Each change carries a <code>status</code> in its <code>.agentic.yaml</code>, which moves through the
+      workflow:</p>
+      <pre><code>exploring ──► proposed ──► applying ──► verified ──► archived</code></pre>
+      <ul>
+        <li><strong>exploring</strong> — initial state of a newly created change.</li>
+        <li><strong>proposed</strong> — after <code>propose</code>, with the artifacts drafted.</li>
+        <li><strong>applying</strong> — after <code>apply</code>, while you implement the tasks.</li>
+        <li><strong>verified</strong> — after <code>verify</code> passes (artifacts present and tasks done).</li>
+        <li><strong>archived</strong> — after <code>archive</code>, with the change moved to history.</li>
+      </ul>
+
+      <h2>Archiving</h2>
+      <p>When the work is done, <code>agentic archive</code> moves the change folder to
+      <code>agentic/changes/archive/&lt;name&gt;/</code> and marks the status as <code>archived</code>. The
+      history is preserved there — plain Markdown that stays readable even without agentic.</p>
+
+      <h2>The model: CLI + agent</h2>
+      <p>An important, honest point: <strong>agentic does not contain an AI model.</strong> It makes no calls
+      to any LLM provider. The CLI is the tool that creates and tracks the artifacts and status; the
+      intelligence that reads the design, writes the code, and checks off tasks comes from the
+      <strong>AI agent</strong> that uses the tool.</p>
+      <p>There are two ways to use it:</p>
+      <ol>
+        <li><strong>Manual (terminal).</strong> You run the commands, edit the artifacts by hand, and implement the code yourself.</li>
+        <li><strong>Assisted (MCP).</strong> You start <code>agentic mcp</code> and connect an MCP-compatible AI assistant (like Kiro). The agent then uses the tools and drives the flow, writing the code and checking off tasks.</li>
+      </ol>
+
+      <h2>Project config</h2>
+      <p>The <code>agentic.config.yaml</code>, created by <code>init</code>, holds the base configuration:</p>
+      <pre><code>version: 1
+schema: spec-driven
+workflow:
+  - explore
+  - propose
+  - apply
+  - verify
+  - archive</code></pre>
+      <p>It is read to resolve the project root (agentic walks up the directory tree looking for this file)
+      and to know the active workflow.</p>
+
+      <div class="next-links">
+        <a href="getting-started.html">Getting Started →</a>
+        <a href="commands.html">Commands →</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="wrap">
+    <div class="foot">
+      <span>agentic — a spec framework for spec-driven development</span>
+      <span>
+        <a href="index.html">Home</a> ·
+        <a href="getting-started.html">Getting Started</a> ·
+        <a href="commands.html">Commands</a>
+      </span>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Commands — agentic</title>
+  <meta name="description" content="Reference for every agentic CLI command: init, explore, propose, apply, verify, archive, and mcp." />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <header>
+    <div class="wrap nav">
+      <a class="brand" href="index.html">
+        <img class="logo-badge" src="assets/img/logo.png" alt="agentic logo" />
+        <span>AGENTIC</span>
+      </a>
+      <nav class="nav-links">
+        <a href="getting-started.html">Getting Started</a>
+        <a href="commands.html" class="active">Commands</a>
+        <a href="concepts.html">Concepts</a>
+        <a href="https://www.npmjs.com/package/@agentic-fy/agentic">npm</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="doc">
+      <div class="doc-head">
+        <div class="kicker">Reference</div>
+        <h1>Commands</h1>
+        <p class="subtitle">Every <code>agentic</code> CLI command. They all run in your terminal.</p>
+      </div>
+    </div>
+
+    <div class="doc-body">
+      <p>Global flags:</p>
+      <ul>
+        <li><code>-v, --version</code> — shows the logo, the version, and the list of commands.</li>
+        <li><code>--help</code> — command help.</li>
+        <li><code>--no-color</code> — disables colored output.</li>
+      </ul>
+      <p>Most commands (except <code>init</code> and <code>mcp</code>) require an already-initialized project —
+      an <code>agentic.config.yaml</code> in the current directory or a directory above it.</p>
+
+      <h2>init</h2>
+      <pre><code>agentic init [path]</code></pre>
+      <p>Creates the base project structure in <code>path</code> (default: current directory):</p>
+      <pre><code>agentic.config.yaml
+agentic/
+├── specs/              (with .gitkeep)
+├── changes/
+│   └── archive/        (with .gitkeep)</code></pre>
+      <p>Idempotent: running it again ensures the directories exist and does <strong>not</strong> overwrite the
+      <code>agentic.config.yaml</code>. It does not generate skills, agents, or artifact content.</p>
+
+      <h2>explore</h2>
+      <pre><code>agentic explore</code></pre>
+      <p>Thinking mode. Confirms an agentic project exists and lists the active changes with their status.
+      It doesn't create or change anything — it's a starting point to map the problem before proposing.</p>
+
+      <h2>propose</h2>
+      <pre><code>agentic propose &lt;name&gt;</code></pre>
+      <p>Creates a change and drafts the artifacts from templates: <code>proposal.md</code>,
+      <code>design.md</code>, <code>tasks.md</code>, and <code>specs/spec.md</code>. The <code>&lt;name&gt;</code>
+      is normalized to a slug (e.g., <code>"add login"</code> becomes <code>add-login</code>). It does not
+      overwrite existing files. At the end, it marks the change status as <code>proposed</code>.</p>
+
+      <h2>apply</h2>
+      <pre><code>agentic apply [name]</code></pre>
+      <p>Reads the change's <code>tasks.md</code>, parses the checkboxes, and reports how many tasks are done
+      and pending, listing the pending ones. Marks the status as <code>applying</code>. If <code>name</code>
+      is omitted and there is exactly one active change, it is used; if there are several, the command asks
+      you to specify the name.</p>
+
+      <h2>verify</h2>
+      <pre><code>agentic verify [name]</code></pre>
+      <p>Checks whether the three artifacts (<code>proposal</code>, <code>design</code>, <code>tasks</code>)
+      exist and whether all tasks in <code>tasks.md</code> are checked. It only marks the change as
+      <code>verified</code> when everything is present and there are no pending tasks; otherwise, it points
+      out what's missing.</p>
+
+      <h2>archive</h2>
+      <pre><code>agentic archive [name]</code></pre>
+      <p>Moves the change to <code>agentic/changes/archive/&lt;name&gt;/</code> and marks the status as
+      <code>archived</code>.</p>
+
+      <h2 id="mcp">mcp</h2>
+      <pre><code>agentic mcp</code></pre>
+      <p>Starts the MCP (Model Context Protocol) server over stdio, exposing the workflow commands as tools
+      an AI agent can consume. Registered tools: <code>explore</code>, <code>propose</code>,
+      <code>apply</code>, <code>verify</code>, <code>archive</code>.</p>
+
+      <h3>Connect to Kiro</h3>
+      <p>Create (or edit) Kiro's MCP configuration file:</p>
+      <ul>
+        <li>Workspace (this project only): <code>.kiro/settings/mcp.json</code></li>
+        <li>User (all projects): <code>~/.kiro/settings/mcp.json</code></li>
+      </ul>
+      <pre><code>{
+  "mcpServers": {
+    "agentic": {
+      "command": "npx",
+      "args": ["-y", "@agentic-fy/agentic", "mcp"],
+      "disabled": false,
+      "autoApprove": ["explore"]
+    }
+  }
+}</code></pre>
+      <p>If <code>agentic</code> is installed globally, you can use the binary directly:</p>
+      <pre><code>{
+  "mcpServers": {
+    "agentic": {
+      "command": "agentic",
+      "args": ["mcp"],
+      "disabled": false,
+      "autoApprove": ["explore"]
+    }
+  }
+}</code></pre>
+      <p><code>autoApprove: ["explore"]</code> lets the read-only tool run without confirmation; the ones that
+      write (<code>propose</code>, <code>apply</code>, <code>archive</code>) still ask for approval.</p>
+
+      <h3>Connect to other editors</h3>
+      <p>VS Code-based editors with MCP support use the same format, changing the file:</p>
+      <ul>
+        <li><strong>Cursor</strong>: <code>.cursor/mcp.json</code></li>
+        <li><strong>GitHub Copilot (VS Code)</strong>: <code>.vscode/mcp.json</code> (uses the <code>servers</code> key instead of <code>mcpServers</code>)</li>
+      </ul>
+
+      <div class="next-links">
+        <a href="getting-started.html">Getting Started →</a>
+        <a href="concepts.html">Concepts →</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="wrap">
+    <div class="foot">
+      <span>agentic — a spec framework for spec-driven development</span>
+      <span>
+        <a href="index.html">Home</a> ·
+        <a href="getting-started.html">Getting Started</a> ·
+        <a href="concepts.html">Concepts</a>
+      </span>
+    </div>
+  </footer>
+</body>
+</html>

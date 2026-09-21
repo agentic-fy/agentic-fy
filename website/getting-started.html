@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Getting Started — agentic</title>
+  <meta name="description" content="Install agentic, initialize your project, and run your first change end to end." />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <header>
+    <div class="wrap nav">
+      <a class="brand" href="index.html">
+        <img class="logo-badge" src="assets/img/logo.png" alt="agentic logo" />
+        <span>AGENTIC</span>
+      </a>
+      <nav class="nav-links">
+        <a href="getting-started.html" class="active">Getting Started</a>
+        <a href="commands.html">Commands</a>
+        <a href="concepts.html">Concepts</a>
+        <a href="https://www.npmjs.com/package/@agentic-fy/agentic">npm</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="doc">
+      <div class="doc-head">
+        <div class="kicker">Guide</div>
+        <h1>Getting Started</h1>
+        <p class="subtitle">Install, initialize, and run your first change end to end.</p>
+      </div>
+    </div>
+
+    <div class="doc-body">
+      <h2>Installation</h2>
+      <p>agentic is a Node.js CLI. You need version 20.19.0 or newer. Check your Node:</p>
+      <pre><code>node --version</code></pre>
+      <p>Install the CLI globally:</p>
+      <pre><code>npm install -g @agentic-fy/agentic</code></pre>
+      <p>If you can't install globally (permission error under <code>/usr/local</code>), run it directly without installing:</p>
+      <pre><code>npx @agentic-fy/agentic --version</code></pre>
+
+      <h3>Verify it worked</h3>
+      <pre><code>agentic --version</code></pre>
+      <p>If it prints the logo and a version number, the CLI is on your PATH.</p>
+
+      <h2>Your first five minutes</h2>
+      <p>The whole loop:</p>
+      <pre><code>$ npm install -g @agentic-fy/agentic
+$ cd your-project &amp;&amp; agentic init
+$ agentic explore                    (optional: think it through first)
+$ agentic propose add-dark-mode      (drafts the plan; you review it)
+$ agentic apply                      (tracks the tasks)
+$ agentic verify                     (checks it's ready)
+$ agentic archive                    (change archived)</code></pre>
+
+      <div class="callout">
+        <strong>Not sure what to build yet?</strong> Start with <code>agentic explore</code>. It's a no-stakes
+        thinking partner: it shows the project state and active changes, and helps turn a fuzzy idea into a
+        concrete plan before any code is written.
+      </div>
+
+      <h2>What agentic creates</h2>
+      <p>After running <code>agentic init</code>, your project gets this structure:</p>
+      <pre><code>agentic.config.yaml     # project configuration
+agentic/
+├── specs/              # project specs
+├── changes/            # proposed changes (one folder per change)
+│   └── archive/        # completed changes</code></pre>
+      <p>The <code>init</code> command creates <strong>only the base structure</strong>, idempotently: running
+      it again does not overwrite the existing <code>agentic.config.yaml</code>.</p>
+
+      <p>When you create a change with <code>propose</code>, it looks like this:</p>
+      <pre><code>agentic/changes/&lt;change-name&gt;/
+├── proposal.md
+├── design.md
+├── tasks.md
+├── specs/
+│   └── spec.md
+└── .agentic.yaml       # metadata (name, status, dates)</code></pre>
+
+      <h2>Understanding the artifacts</h2>
+      <table>
+        <thead>
+          <tr><th>Artifact</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>proposal.md</code></td><td>The "why" and "what" — intent, scope, and approach</td></tr>
+          <tr><td><code>specs/spec.md</code></td><td>Requirements and acceptance criteria</td></tr>
+          <tr><td><code>design.md</code></td><td>The "how" — technical approach and architecture decisions</td></tr>
+          <tr><td><code>tasks.md</code></td><td>Implementation checklist with checkboxes</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Example: your first change</h2>
+      <p>Let's add dark mode to an application.</p>
+
+      <h3>1. Initialize the project</h3>
+      <pre><code>cd your-project
+agentic init</code></pre>
+
+      <h3>2. Create the change</h3>
+      <pre><code>$ agentic propose add-dark-mode
+
+[propose] add-dark-mode
+Created: proposal.md
+Created: design.md
+Created: tasks.md
+Created: specs/spec.md</code></pre>
+
+      <h3>3. Fill in the artifacts</h3>
+      <p>Edit the files in <code>agentic/changes/add-dark-mode/</code> and write the real tasks in <code>tasks.md</code>:</p>
+      <pre><code># Tasks — add-dark-mode
+
+- [ ] 1. Create ThemeContext with light/dark state
+- [ ] 2. Add a theme toggle to settings
+- [ ] 3. Persist the preference in localStorage</code></pre>
+
+      <h3>4. Track the implementation</h3>
+      <pre><code>$ agentic apply
+
+[apply] add-dark-mode
+Applying change "add-dark-mode".
+Tasks: 0 done, 3 pending.
+  [ ] 1. Create ThemeContext with light/dark state
+  [ ] 2. Add a theme toggle to settings
+  [ ] 3. Persist the preference in localStorage</code></pre>
+      <p>Implement the tasks and mark them as <code>[x]</code> in <code>tasks.md</code> as you go.</p>
+
+      <h3>5. Verify</h3>
+      <pre><code>$ agentic verify
+
+[verify] add-dark-mode
+All artifacts present (proposal, design, tasks).
+All tasks marked done.
+Status updated to "verified".</code></pre>
+
+      <h3>6. Archive</h3>
+      <pre><code>$ agentic archive
+
+[archive] add-dark-mode
+Change "add-dark-mode" archived at agentic/changes/archive/add-dark-mode.</code></pre>
+
+      <h2>Letting the AI drive (MCP)</h2>
+      <p>The commands above run in the terminal. To let your AI assistant drive the workflow, connect the MCP server:</p>
+      <pre><code>agentic mcp</code></pre>
+      <p>It exposes the <code>explore</code>, <code>propose</code>, <code>apply</code>, <code>verify</code>,
+      and <code>archive</code> tools to any MCP-compatible agent. See the
+      <a href="commands.html#mcp">Commands</a> page for setup in editors like Kiro.</p>
+
+      <div class="next-links">
+        <a href="concepts.html">Concepts →</a>
+        <a href="commands.html">Commands →</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="wrap">
+    <div class="foot">
+      <span>agentic — a spec framework for spec-driven development</span>
+      <span>
+        <a href="index.html">Home</a> ·
+        <a href="commands.html">Commands</a> ·
+        <a href="concepts.html">Concepts</a>
+      </span>
+    </div>
+  </footer>
+</body>
+</html>

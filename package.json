@@ -1,0 +1,55 @@
+{
+  "name": "@agentic-fy/agentic",
+  "version": "0.1.2",
+  "description": "CLI TypeScript performático e enxuto para workflow spec-driven, com suporte a MCP",
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "agentic": "bin/agentic.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node bin/agentic.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build",
+    "release": "npm run build && npm publish",
+    "release:otp": "npm run build && npm publish --otp"
+  },
+  "keywords": [
+    "agentic",
+    "cli",
+    "spec-driven",
+    "mcp",
+    "typescript"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "chalk": "^5.3.0",
+    "commander": "^14.0.0",
+    "yaml": "^2.5.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
