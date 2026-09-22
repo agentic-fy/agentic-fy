@@ -67,6 +67,23 @@ export function registerInitCommand(
           );
         }
 
+        // 4. Report generated slash commands / skills.
+        if (result.skills.length > 0) {
+          console.log('Commands & skills:');
+          for (const s of result.skills) {
+            const cmd = s.commands;
+            const sk = s.skills;
+            const written = cmd.created + cmd.updated + sk.created + sk.updated;
+            const label =
+              written > 0
+                ? chalk.green(
+                    `${cmd.created + cmd.updated} command(s), ${sk.created + sk.updated} skill(s)`
+                  )
+                : chalk.dim('up to date');
+            console.log(`  ${s.tool.name}: ${label} — ${rel(path.join(result.root, s.tool.skillsDir ?? ''))}`);
+          }
+        }
+
         console.log();
         console.log(chalk.dim('Next step: agentic-fy propose "your idea"'));
       } catch (error) {

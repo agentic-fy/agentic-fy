@@ -5,6 +5,35 @@ All notable changes to this project are documented here.
 The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to semantic versioning ([SemVer](https://semver.org/)).
 
+## [0.1.3] - 2026-09-22
+
+Per-tool slash commands and skills. Beyond the MCP integration, `init` now
+writes markdown command and skill files into the repo so AI tools (Claude Code,
+Cursor, Kiro, GitHub Copilot, Windsurf) register agentic-fy commands and
+auto-invocable skills. Non-destructive and idempotent, with no new dependencies.
+
+### Added
+
+- **Slash commands & skills generation**
+  - `init` now generates, for each selected tool that reads them, the workflow
+    commands (`explore`, `propose`, `apply`, `verify`, `archive`) as files:
+    - commands at `<tool>/commands/agentic-fy/<id>.md` (namespaced tools, e.g.
+      Claude Code -> `/agentic-fy:propose`) or `<tool>/commands/agentic-fy-<id>.md`
+      (flat tools, e.g. Cursor -> `/agentic-fy-propose`);
+    - skills at `<tool>/skills/agentic-fy-<id>/SKILL.md`, each with `name`,
+      `description`, and `allowed-tools` frontmatter.
+  - Command/skill bodies guide the agent through the loop and hand off to the
+    next step; the command invocation form is rewritten per tool.
+  - Generation is non-destructive and idempotent: files are only written when
+    their content changes, so re-running `init` and manual edits are preserved.
+
+### Changed
+
+- `init` now reports a "Commands & skills" section alongside the MCP setup,
+  listing how many command and skill files were written per tool.
+- The tool catalog carries the skill/command surface per tool (`skillsDir` and
+  the namespaced/flat invocation style).
+
 ## [0.1.2] - 2026-09-21
 
 CLI consolidation: beyond the workflow loop, agentic-fy now inspects,
@@ -54,8 +83,7 @@ validates, and visualizes the project, and integrates AI tools via MCP during
 
 Features from the reference project that were **not** brought in, to preserve the
 minimalist proposal: multi-repository planning (stores/worksets),
-profiles, migration/legacy, telemetry, per-tool skill generation, and the
-structured spec deltas model.
+profiles, migration/legacy, telemetry, and the structured spec deltas model.
 
 ## [0.1.1] - 2026-09
 
@@ -64,5 +92,6 @@ structured spec deltas model.
 - MCP server (`mcp`) exposing the workflow tools via stdio.
 - Base project structure (`agentic-fy.config.yaml` + `agentic-fy/`).
 
+[0.1.3]: #013---2026-09-22
 [0.1.2]: #012---2026-09-21
 [0.1.1]: #011---2026-09

@@ -7,6 +7,7 @@ export * from './core/validate.js';
 export * from './core/match.js';
 export * from './core/tools.js';
 export * from './core/tool-setup.js';
+export * from './core/skills.js';
 export * from './core/tool-selection.js';
 export * from './core/init.js';
 export * from './core/status.js';

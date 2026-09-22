@@ -5,12 +5,15 @@ import { resolveProjectPaths, serializeProjectConfig } from './change.js';
 import { DEFAULT_PROJECT_CONFIG } from './schema.js';
 import { AiTool } from './tools.js';
 import { setupTools, ToolSetupResult } from './tool-setup.js';
+import { generateSkills, SkillSetupResult } from './skills.js';
 
 export interface InitResult {
   root: string;
   createdDirs: string[];
   configStatus: 'created' | 'exists';
   tools: ToolSetupResult[];
+  /** Slash-command / skill generation results per tool (may be empty). */
+  skills: SkillSetupResult[];
 }
 
 /**
@@ -21,8 +24,10 @@ export interface InitResult {
  * - directories are created with { recursive: true } (does not fail if they exist);
  * - the config is only written when it doesn't exist yet.
  *
- * When `tools` is provided, it also generates/merges the MCP configuration of
- * each selected tool (pointing to `agentic-fy mcp`), non-destructively.
+ * When `tools` is provided, it also (both non-destructively):
+ *  - generates/merges the MCP configuration of each selected tool (pointing to
+ *    `agentic-fy mcp`);
+ *  - generates the slash commands and skills for tools that read them.
  */
 export async function initProject(
   targetPath = '.',
@@ -60,7 +65,10 @@ export async function initProject(
   // Configure the MCP integration of the selected tools (non-destructive).
   const toolResults = tools.length > 0 ? await setupTools(root, tools) : [];
 
-  return { root, createdDirs, configStatus, tools: toolResults };
+  // Generate slash commands / skills for tools that read them (non-destructive).
+  const skillResults = tools.length > 0 ? await generateSkills(root, tools) : [];
+
+  return { root, createdDirs, configStatus, tools: toolResults, skills: skillResults };
 }
 
 async function writeGitkeep(dir: string): Promise<void> {
