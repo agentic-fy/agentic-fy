@@ -1,5 +1,5 @@
 {
-  "name": "agentic-cli",
+  "name": "agentic-fy",
   "version": "0.1.0",
   "description": "CLI TypeScript performático e enxuto para workflow spec-driven, com suporte a MCP",
   "type": "module",
