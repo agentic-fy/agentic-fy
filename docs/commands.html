@@ -3,22 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Commands — agentic</title>
-  <meta name="description" content="Reference for every agentic CLI command: init, explore, propose, apply, verify, archive, and mcp." />
+  <title>Commands — agentic-fy</title>
+  <meta name="description" content="Reference for every agentic-fy CLI command: init, explore, propose, apply, verify, archive, list, show, validate, status, doctor, context, config, completion, view, and mcp." />
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body>
   <header>
     <div class="wrap nav">
       <a class="brand" href="index.html">
-        <img class="logo-badge" src="assets/img/logo.png" alt="agentic logo" />
-        <span>AGENTIC</span>
+        <img class="logo-badge" src="assets/img/logo.png" alt="agentic-fy logo" />
+        <span>AGENTIC-FY</span>
       </a>
       <nav class="nav-links">
         <a href="getting-started.html">Getting Started</a>
         <a href="commands.html" class="active">Commands</a>
         <a href="concepts.html">Concepts</a>
-        <a href="https://www.npmjs.com/package/@agentic-fy/agentic">npm</a>
+        <a href="https://www.npmjs.com/package/@agentic-fy/agentic-fy">npm</a>
       </nav>
     </div>
   </header>
@@ -28,7 +28,7 @@
       <div class="doc-head">
         <div class="kicker">Reference</div>
         <h1>Commands</h1>
-        <p class="subtitle">Every <code>agentic</code> CLI command. They all run in your terminal.</p>
+        <p class="subtitle">Every <code>agentic-fy</code> CLI command. They all run in your terminal.</p>
       </div>
     </div>
 
@@ -40,91 +40,144 @@
         <li><code>--no-color</code> — disables colored output.</li>
       </ul>
       <p>Most commands (except <code>init</code> and <code>mcp</code>) require an already-initialized project —
-      an <code>agentic.config.yaml</code> in the current directory or a directory above it.</p>
+      an <code>agentic-fy.config.yaml</code> in the current directory or a directory above it.</p>
 
       <h2>init</h2>
-      <pre><code>agentic init [path]</code></pre>
+      <pre><code>agentic-fy init [path] [--tools &lt;list&gt;]</code></pre>
       <p>Creates the base project structure in <code>path</code> (default: current directory):</p>
-      <pre><code>agentic.config.yaml
-agentic/
+      <pre><code>agentic-fy.config.yaml
+agentic-fy/
 ├── specs/              (with .gitkeep)
 ├── changes/
 │   └── archive/        (with .gitkeep)</code></pre>
       <p>Idempotent: running it again ensures the directories exist and does <strong>not</strong> overwrite the
-      <code>agentic.config.yaml</code>. It does not generate skills, agents, or artifact content.</p>
+      <code>agentic-fy.config.yaml</code>. It also configures the MCP integration for your AI tools.</p>
+      <p>Use <code>--tools</code> to skip the interactive prompt: <code>--tools all</code>,
+      <code>--tools none</code>, or a comma-separated list such as <code>--tools kiro,cursor</code>. The
+      <code>mcp.json</code> merge is non-destructive: an existing config keeps its other servers.</p>
 
       <h2>explore</h2>
-      <pre><code>agentic explore</code></pre>
-      <p>Thinking mode. Confirms an agentic project exists and lists the active changes with their status.
+      <pre><code>agentic-fy explore</code></pre>
+      <p>Thinking mode. Confirms an agentic-fy project exists and lists the active changes with their status.
       It doesn't create or change anything — it's a starting point to map the problem before proposing.</p>
 
       <h2>propose</h2>
-      <pre><code>agentic propose &lt;name&gt;</code></pre>
+      <pre><code>agentic-fy propose &lt;name&gt;</code></pre>
       <p>Creates a change and drafts the artifacts from templates: <code>proposal.md</code>,
       <code>design.md</code>, <code>tasks.md</code>, and <code>specs/spec.md</code>. The <code>&lt;name&gt;</code>
       is normalized to a slug (e.g., <code>"add login"</code> becomes <code>add-login</code>). It does not
       overwrite existing files. At the end, it marks the change status as <code>proposed</code>.</p>
 
       <h2>apply</h2>
-      <pre><code>agentic apply [name]</code></pre>
+      <pre><code>agentic-fy apply [name]</code></pre>
       <p>Reads the change's <code>tasks.md</code>, parses the checkboxes, and reports how many tasks are done
       and pending, listing the pending ones. Marks the status as <code>applying</code>. If <code>name</code>
       is omitted and there is exactly one active change, it is used; if there are several, the command asks
       you to specify the name.</p>
 
       <h2>verify</h2>
-      <pre><code>agentic verify [name]</code></pre>
+      <pre><code>agentic-fy verify [name]</code></pre>
       <p>Checks whether the three artifacts (<code>proposal</code>, <code>design</code>, <code>tasks</code>)
       exist and whether all tasks in <code>tasks.md</code> are checked. It only marks the change as
       <code>verified</code> when everything is present and there are no pending tasks; otherwise, it points
       out what's missing.</p>
 
       <h2>archive</h2>
-      <pre><code>agentic archive [name]</code></pre>
-      <p>Moves the change to <code>agentic/changes/archive/&lt;name&gt;/</code> and marks the status as
+      <pre><code>agentic-fy archive [name]</code></pre>
+      <p>Moves the change to <code>agentic-fy/changes/archive/&lt;name&gt;/</code> and marks the status as
       <code>archived</code>.</p>
 
+      <h2>list</h2>
+      <pre><code>agentic-fy list [--specs] [--long] [--json]</code></pre>
+      <p>Lists the active changes. Use <code>--specs</code> to list the project specs instead, <code>--long</code>
+      to include the title and task progress, and <code>--json</code> for machine-readable output.</p>
+
+      <h2>show</h2>
+      <pre><code>agentic-fy show &lt;name&gt; [--artifact &lt;id&gt;] [--spec &lt;id&gt;] [--json]</code></pre>
+      <p>Shows a change summary (status, title, artifacts, tasks). Use <code>--artifact proposal|design|tasks</code>
+      to print a raw artifact, or <code>--spec &lt;id&gt;</code> to print a project spec. Suggests close names
+      ("did you mean?") when the name doesn't match.</p>
+
+      <h2>validate</h2>
+      <pre><code>agentic-fy validate [name] [--all] [--strict] [--json]</code></pre>
+      <p>Validates a change's artifacts: missing artifact, untouched template, empty body, and <code>tasks.md</code>
+      without a real checkbox. Use <code>--all</code> to validate every active change and <code>--strict</code>
+      to treat warnings as failures.</p>
+
+      <h2>status</h2>
+      <pre><code>agentic-fy status [--json]</code></pre>
+      <p>Overview of the active changes by stage, with task progress and any validation issues.</p>
+
+      <h2>doctor</h2>
+      <pre><code>agentic-fy doctor [--json]</code></pre>
+      <p>Checks project integrity: valid config, intact change metadata, orphaned directories, and consistent
+      artifacts. Read-only — it does not repair anything.</p>
+
+      <h2>context</h2>
+      <pre><code>agentic-fy context [--json]</code></pre>
+      <p>Gathers the project context (config, active changes, and specs) into a single brief for the agent.</p>
+
+      <h2>config</h2>
+      <pre><code>agentic-fy config show [--json]
+agentic-fy config set &lt;key&gt; &lt;value&gt;</code></pre>
+      <p>Reads and edits <code>agentic-fy.config.yaml</code>. Editable keys: <code>version</code> and
+      <code>schema</code>. Every write is validated against the schema before saving.</p>
+
+      <h2>completion</h2>
+      <pre><code>agentic-fy completion [shell]</code></pre>
+      <p>Prints an autocompletion script for <code>powershell</code>, <code>bash</code>, or <code>zsh</code>.
+      It does not install anything automatically — pipe it into your shell config as you prefer.</p>
+
+      <h2>view</h2>
+      <pre><code>agentic-fy view [--static] [--json]</code></pre>
+      <p>A dashboard of specs and changes. In an interactive terminal it opens a number-navigable view;
+      <code>--static</code> prints the panel and exits, and <code>--json</code> returns the raw data.</p>
+
       <h2 id="mcp">mcp</h2>
-      <pre><code>agentic mcp</code></pre>
+      <pre><code>agentic-fy mcp</code></pre>
       <p>Starts the MCP (Model Context Protocol) server over stdio, exposing the workflow commands as tools
       an AI agent can consume. Registered tools: <code>explore</code>, <code>propose</code>,
-      <code>apply</code>, <code>verify</code>, <code>archive</code>.</p>
+      <code>apply</code>, <code>verify</code>, <code>archive</code>, <code>list</code>, <code>show</code>,
+      <code>validate</code>, <code>status</code>, and <code>context</code>.</p>
 
       <h3>Connect to Kiro</h3>
-      <p>Create (or edit) Kiro's MCP configuration file:</p>
+      <p>The easiest way is to let <code>agentic-fy init --tools kiro</code> configure it for you. To do it
+      manually, create (or edit) Kiro's MCP configuration file:</p>
       <ul>
         <li>Workspace (this project only): <code>.kiro/settings/mcp.json</code></li>
         <li>User (all projects): <code>~/.kiro/settings/mcp.json</code></li>
       </ul>
       <pre><code>{
   "mcpServers": {
-    "agentic": {
+    "agentic-fy": {
       "command": "npx",
-      "args": ["-y", "@agentic-fy/agentic", "mcp"],
+      "args": ["-y", "@agentic-fy/agentic-fy", "mcp"],
       "disabled": false,
-      "autoApprove": ["explore"]
+      "autoApprove": ["explore", "list", "show", "validate"]
     }
   }
 }</code></pre>
-      <p>If <code>agentic</code> is installed globally, you can use the binary directly:</p>
+      <p>If <code>agentic-fy</code> is installed globally, you can use the binary directly:</p>
       <pre><code>{
   "mcpServers": {
-    "agentic": {
-      "command": "agentic",
+    "agentic-fy": {
+      "command": "agentic-fy",
       "args": ["mcp"],
       "disabled": false,
-      "autoApprove": ["explore"]
+      "autoApprove": ["explore", "list", "show", "validate"]
     }
   }
 }</code></pre>
-      <p><code>autoApprove: ["explore"]</code> lets the read-only tool run without confirmation; the ones that
-      write (<code>propose</code>, <code>apply</code>, <code>archive</code>) still ask for approval.</p>
+      <p><code>autoApprove</code> lets the read-only tools run without confirmation; the ones that write
+      (<code>propose</code>, <code>apply</code>, <code>archive</code>) still ask for approval.</p>
 
       <h3>Connect to other editors</h3>
       <p>VS Code-based editors with MCP support use the same format, changing the file:</p>
       <ul>
         <li><strong>Cursor</strong>: <code>.cursor/mcp.json</code></li>
         <li><strong>GitHub Copilot (VS Code)</strong>: <code>.vscode/mcp.json</code> (uses the <code>servers</code> key instead of <code>mcpServers</code>)</li>
+        <li><strong>Claude Code</strong>: <code>.mcp.json</code></li>
+        <li><strong>Windsurf</strong>: <code>.windsurf/mcp.json</code></li>
       </ul>
 
       <div class="next-links">
@@ -136,7 +189,7 @@ agentic/
 
   <footer class="wrap">
     <div class="foot">
-      <span>agentic — a spec framework for spec-driven development</span>
+      <span>agentic-fy — a spec framework for spec-driven development</span>
       <span>
         <a href="index.html">Home</a> ·
         <a href="getting-started.html">Getting Started</a> ·
