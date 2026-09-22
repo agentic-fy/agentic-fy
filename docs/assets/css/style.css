@@ -27,11 +27,26 @@ body {
   color: var(--text);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
   background-image:
     radial-gradient(1200px 600px at 50% -10%, rgba(124, 58, 237, 0.25), transparent 70%),
     radial-gradient(800px 400px at 90% 10%, rgba(168, 85, 247, 0.12), transparent 60%);
   background-attachment: fixed;
 }
+
+/* Neural-network background canvas: fixed, behind all content. */
+#neural-bg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+/* Keep page chrome and content above the canvas. */
+header, main, footer { position: relative; z-index: 1; }
 
 a { color: var(--purple-bright); text-decoration: none; }
 a:hover { text-decoration: underline; }
@@ -56,6 +71,11 @@ header {
 .nav-links a { color: var(--text-dim); font-size: 14px; }
 .nav-links a:hover { color: var(--text); text-decoration: none; }
 .nav-links a.active { color: var(--purple-bright); }
+
+/* GitHub icon link */
+.nav-links a.icon-link { display: inline-flex; align-items: center; }
+.nav-links a.icon-link svg { width: 22px; height: 22px; display: block; fill: currentColor; }
+.nav-links a.icon-link:hover { color: var(--purple-bright); }
 
 /* Hero */
 .hero { text-align: center; padding: 96px 0 64px; }
@@ -193,3 +213,75 @@ footer { border-top: 1px solid var(--border); padding: 40px 0; margin-top: 40px;
   padding: 12px 18px; font-size: 14px; color: var(--text);
 }
 .next-links a:hover { border-color: var(--purple); text-decoration: none; }
+
+/* ─── Responsive ────────────────────────────────────────────── */
+
+/* Prevent long tokens (URLs, package names) from forcing horizontal scroll. */
+.doc-body p, .doc-body li, .synopsis p { overflow-wrap: anywhere; }
+
+/* Tablet and below */
+@media (max-width: 860px) {
+  .wrap { padding: 0 20px; }
+
+  .nav { height: auto; min-height: 60px; padding: 10px 0; flex-wrap: wrap; gap: 10px 18px; }
+  .nav-links { gap: 16px; flex-wrap: wrap; }
+
+  .hero { padding: 64px 0 48px; }
+  .hero-logo { width: 120px; height: 120px; margin-bottom: 22px; }
+
+  section.block { padding: 44px 0; }
+  .doc { padding: 40px 0 20px; }
+
+  .synopsis { padding: 26px; }
+
+  /* Single-column stacks read better than cramped multi-column on tablets. */
+  .grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .flow { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+}
+
+/* Phones */
+@media (max-width: 560px) {
+  .wrap { padding: 0 16px; }
+
+  /* Brand stays left; links wrap to their own row and can scroll if needed. */
+  .nav { flex-direction: column; align-items: flex-start; }
+  .nav-links {
+    width: 100%;
+    gap: 14px 18px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+  .nav-links a { white-space: nowrap; }
+
+  .hero { padding: 48px 0 40px; }
+  .hero-logo { width: 96px; height: 96px; margin-bottom: 18px; }
+  .eyebrow { margin-bottom: 20px; }
+
+  /* Full-width, comfortably tappable CTAs. */
+  .cta-row { flex-direction: column; align-items: stretch; }
+  .btn { justify-content: center; width: 100%; padding: 13px 18px; }
+
+  section.block { padding: 36px 0; }
+  .synopsis { padding: 20px; }
+
+  .grid, .flow { grid-template-columns: 1fr; }
+
+  .code, .doc-body pre { padding: 14px 16px; font-size: 13px; }
+
+  .doc { padding: 32px 0 16px; }
+  .doc-body h2 { margin: 34px 0 12px; font-size: 22px; }
+
+  /* Footer stacks its two halves. */
+  .foot { flex-direction: column; gap: 12px; }
+  .next-links { flex-direction: column; }
+  .next-links a { text-align: center; }
+
+  /* Let wide tables scroll horizontally instead of breaking the layout. */
+  .doc-body table { display: block; overflow-x: auto; white-space: nowrap; }
+}
+
+/* Respect users who prefer less motion: soften transitions site-wide. */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
