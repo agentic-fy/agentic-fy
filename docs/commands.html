@@ -68,7 +68,8 @@ agentic-fy/
       <h2>propose</h2>
       <pre><code>agentic-fy propose &lt;name&gt;</code></pre>
       <p>Creates a change and drafts the artifacts from templates: <code>proposal.md</code>,
-      <code>design.md</code>, <code>tasks.md</code>, and <code>specs/spec.md</code>. The <code>&lt;name&gt;</code>
+      <code>design.md</code>, <code>tasks.md</code>, and a spec delta at
+      <code>specs/&lt;name&gt;.delta.yaml</code>. The <code>&lt;name&gt;</code>
       is normalized to a slug (e.g., <code>"add login"</code> becomes <code>add-login</code>). It does not
       overwrite existing files. At the end, it marks the change status as <code>proposed</code>.</p>
 
@@ -87,9 +88,12 @@ agentic-fy/
       out what's missing.</p>
 
       <h2>archive</h2>
-      <pre><code>agentic-fy archive [name]</code></pre>
-      <p>Moves the change to <code>agentic-fy/changes/archive/&lt;name&gt;/</code> and marks the status as
-      <code>archived</code>.</p>
+      <pre><code>agentic-fy archive [name] [--dry-run]</code></pre>
+      <p>Merges the change's spec deltas (<code>specs/*.delta.yaml</code>) into the project's consolidated
+      specs at <code>agentic-fy/specs/&lt;capability&gt;.md</code>, then moves the change to
+      <code>agentic-fy/changes/archive/&lt;name&gt;/</code> and marks the status as <code>archived</code>.
+      The merge is deterministic and idempotent, and fails loudly if a delta references a requirement that
+      doesn't exist. Use <code>--dry-run</code> to preview the merge without writing or archiving.</p>
 
       <h2>list</h2>
       <pre><code>agentic-fy list [--specs] [--long] [--json]</code></pre>
@@ -105,8 +109,9 @@ agentic-fy/
       <h2>validate</h2>
       <pre><code>agentic-fy validate [name] [--all] [--strict] [--json]</code></pre>
       <p>Validates a change's artifacts: missing artifact, untouched template, empty body, and <code>tasks.md</code>
-      without a real checkbox. Use <code>--all</code> to validate every active change and <code>--strict</code>
-      to treat warnings as failures.</p>
+      without a real checkbox. It also validates each spec delta (<code>specs/*.delta.yaml</code>): malformed
+      YAML or an invalid structure is a hard error, an untouched delta template is a warning. Use
+      <code>--all</code> to validate every active change and <code>--strict</code> to treat warnings as failures.</p>
 
       <h2>status</h2>
       <pre><code>agentic-fy status [--json]</code></pre>
@@ -134,8 +139,10 @@ agentic-fy config set &lt;key&gt; &lt;value&gt;</code></pre>
 
       <h2>view</h2>
       <pre><code>agentic-fy view [--static] [--json]</code></pre>
-      <p>A dashboard of specs and changes. In an interactive terminal it opens a number-navigable view;
-      <code>--static</code> prints the panel and exits, and <code>--json</code> returns the raw data.</p>
+      <p>A dashboard of specs and changes, with a summary line
+      (<code>Changes · Merged · Specs · Tasks</code>) and a task-progress bar. In an interactive terminal it
+      opens a number-navigable view; <code>--static</code> prints the panel and exits, and <code>--json</code>
+      returns the raw data.</p>
 
       <h2 id="mcp">mcp</h2>
       <pre><code>agentic-fy mcp</code></pre>

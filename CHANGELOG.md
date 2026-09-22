@@ -5,6 +5,47 @@ All notable changes to this project are documented here.
 The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to semantic versioning ([SemVer](https://semver.org/)).
 
+## [0.1.4] - 2026-09-22
+
+Structured spec deltas and consolidated specs. Changes now describe how they
+modify a capability through a YAML delta, and `archive` merges those deltas into
+the project's living specs. A deliberately better take on the reference project's
+markdown-delta model: structured, schema-validated, and fail-loud.
+
+### Added
+
+- **Spec deltas (YAML)**
+  - `propose` now drafts `specs/<change>.delta.yaml` (instead of a full spec
+    markdown), with operations `add` / `modify` / `remove` that reference
+    requirements by a **stable id** (independent of the title).
+- **Consolidated specs + merge on archive**
+  - `archive` applies each delta into `agentic-fy/specs/<capability>.md`
+    (readable markdown), then archives the change. The merge is deterministic
+    (remove -> modify -> add), idempotent, and fails loudly on a `modify` of a
+    missing id or an `add` that collides with different content.
+  - `archive --dry-run` previews the merge without writing or archiving.
+- **Validation of deltas**
+  - `validate` now parses `specs/*.delta.yaml`: malformed YAML or an invalid
+    structure is a hard error (never silent); an untouched delta template is a
+    warning.
+- **Dashboard progress**
+  - `view` gained a summary progress bar and a `Merged` count
+    (`Changes · Merged · Specs · Tasks` + a task-progress bar).
+
+### Changed
+
+- The `spec-driven` schema's `specs` instruction now documents the YAML delta
+  format instead of the markdown ADDED/MODIFIED/REMOVED/RENAMED sections.
+
+### Improved over the reference model
+
+- Requirements carry a stable `id`, so renaming is just a `modify` of the title
+  (no special rename operation) and references never break.
+- `modify` is a partial patch (`set` / `addScenarios` / `removeScenarios`), so
+  you never recopy a whole requirement and never silently drop a scenario.
+- Deltas are validated by schema, eliminating the "fails silently" markdown
+  parsing pitfalls.
+
 ## [0.1.3] - 2026-09-22
 
 Per-tool slash commands and skills. Beyond the MCP integration, `init` now
@@ -83,7 +124,8 @@ validates, and visualizes the project, and integrates AI tools via MCP during
 
 Features from the reference project that were **not** brought in, to preserve the
 minimalist proposal: multi-repository planning (stores/worksets),
-profiles, migration/legacy, telemetry, and the structured spec deltas model.
+profiles, migration/legacy, and telemetry. (The spec deltas model was later
+added in 0.1.4, in a leaner YAML form.)
 
 ## [0.1.1] - 2026-09
 
@@ -92,6 +134,7 @@ profiles, migration/legacy, telemetry, and the structured spec deltas model.
 - MCP server (`mcp`) exposing the workflow tools via stdio.
 - Base project structure (`agentic-fy.config.yaml` + `agentic-fy/`).
 
+[0.1.4]: #014---2026-09-22
 [0.1.3]: #013---2026-09-22
 [0.1.2]: #012---2026-09-21
 [0.1.1]: #011---2026-09

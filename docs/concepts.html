@@ -48,12 +48,12 @@
       behavior, you create a change with <code>agentic-fy propose &lt;name&gt;</code>. Each change is a folder in
       <code>agentic-fy/changes/&lt;name&gt;/</code> that gathers everything about that work:</p>
       <pre><code>agentic-fy/changes/add-dark-mode/
-├── proposal.md         # why and what
-├── design.md           # how
-├── tasks.md            # steps
+├── proposal.md              # why and what
+├── design.md                # how
+├── tasks.md                 # steps
 ├── specs/
-│   └── spec.md         # requirements and acceptance criteria
-└── .agentic-fy.yaml    # metadata: name, status, dates</code></pre>
+│   └── add-dark-mode.delta.yaml   # spec delta: how this change alters a capability
+└── .agentic-fy.yaml         # metadata: name, status, dates</code></pre>
       <p>The name you pass is normalized to a disk-safe slug: <code>"Add Dark Mode"</code> becomes
       <code>add-dark-mode</code>.</p>
 
@@ -66,7 +66,7 @@
         </thead>
         <tbody>
           <tr><td><code>proposal.md</code></td><td>Why do this, and what changes?</td></tr>
-          <tr><td><code>specs/spec.md</code></td><td>What are the requirements and acceptance criteria?</td></tr>
+          <tr><td><code>specs/&lt;capability&gt;.delta.yaml</code></td><td>How do the requirements of a capability change?</td></tr>
           <tr><td><code>design.md</code></td><td>How will it be built?</td></tr>
           <tr><td><code>tasks.md</code></td><td>What are the concrete implementation steps?</td></tr>
         </tbody>
@@ -76,6 +76,37 @@
       <p>The <code>propose</code> command generates these files from templates. From there, you (or the AI)
       fill them in with the real content. <code>tasks.md</code> uses Markdown checkboxes
       (<code>- [ ]</code> / <code>- [x]</code>), which agentic-fy understands to track progress.</p>
+
+      <h2>Spec deltas</h2>
+      <p>A change does not rewrite whole specs. It carries a <strong>spec delta</strong> per capability at
+      <code>specs/&lt;capability&gt;.delta.yaml</code> — a structured description of what the change adds,
+      modifies, or removes. Requirements are referenced by a <strong>stable id</strong>, so renaming a
+      requirement is just changing its title, and references never break.</p>
+      <pre><code>capability: data-export
+purpose: Lets users take their data out in a portable format.   # only for a new capability
+operations:
+  - op: add
+    id: user-can-export-data
+    title: User can export data
+    statement: The system SHALL let users export their data as CSV.
+    scenarios:
+      - when: the user clicks Export
+        then: a CSV file is downloaded
+
+  - op: modify
+    id: user-can-export-data
+    set:
+      statement: The system SHALL let users export as CSV or JSON.
+    addScenarios:
+      - when: the user selects JSON
+        then: a JSON file is downloaded
+
+  - op: remove
+    id: legacy-export
+    reason: Replaced by the new export</code></pre>
+      <p>The structure is validated by a schema: a malformed delta fails loudly (never silently), and
+      <code>modify</code> is a partial patch — you never recopy a whole requirement or drop a scenario by
+      accident.</p>
 
       <h3>Enablers, not gates</h3>
       <p>The order of the artifacts shows what becomes <em>possible</em> next, not what you're <em>forced</em>
@@ -95,10 +126,17 @@
         <li><strong>archived</strong> — after <code>archive</code>, with the change moved to history.</li>
       </ul>
 
-      <h2>Archiving</h2>
-      <p>When the work is done, <code>agentic-fy archive</code> moves the change folder to
-      <code>agentic-fy/changes/archive/&lt;name&gt;/</code> and marks the status as <code>archived</code>. The
-      history is preserved there — plain Markdown that stays readable even without agentic-fy.</p>
+      <h2>Archiving and consolidated specs</h2>
+      <p>When the work is done, <code>agentic-fy archive</code> does two things. First it <strong>merges</strong>
+      the change's spec deltas into the project's consolidated specs at
+      <code>agentic-fy/specs/&lt;capability&gt;.md</code> — a living, readable description of what the system
+      does now (not a diary of changes). Then it moves the change folder to
+      <code>agentic-fy/changes/archive/&lt;name&gt;/</code> and marks the status as <code>archived</code>.</p>
+      <p>The merge is deterministic and idempotent, and it fails loudly if a delta references a requirement
+      that doesn't exist. Preview it without writing anything using
+      <code>agentic-fy archive --dry-run</code>.</p>
+      <pre><code>changes/&lt;name&gt;/specs/&lt;cap&gt;.delta.yaml  ──►  merge  ──►  specs/&lt;cap&gt;.md
+        (how it changes)                                  (what it is now)</code></pre>
 
       <h2>The model: CLI + agent</h2>
       <p>An important, honest point: <strong>agentic-fy does not contain an AI model.</strong> It makes no calls

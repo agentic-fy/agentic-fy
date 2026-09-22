@@ -11,11 +11,12 @@ import {
   writeArtifact,
   writeSpec,
   artifactTemplate,
-  specTemplate,
   readArtifact,
   parseTasks,
 } from './artifacts.js';
 import { CHANGE_ARTIFACTS } from './schema.js';
+import { specDeltaTemplate } from './spec-delta.js';
+import { applyChangeSpecs } from './spec-merge.js';
 
 /**
  * Pure workflow functions. They are the shared core: both the CLI handlers
@@ -60,9 +61,12 @@ export async function runPropose(name: string, cwd = process.cwd()): Promise<Wor
     messages.push(res.written ? `Created: ${id}.md` : `Kept: ${id}.md (already existed)`);
   }
 
-  // Draft an initial spec.
-  const spec = await writeSpec(root, change.name, 'spec.md', specTemplate(change.name));
-  messages.push(spec.written ? 'Created: specs/spec.md' : 'Kept: specs/spec.md (already existed)');
+  // Draft an initial spec delta (YAML) for the change's own capability.
+  const deltaFile = `${change.name}.delta.yaml`;
+  const spec = await writeSpec(root, change.name, deltaFile, specDeltaTemplate(change.name));
+  messages.push(
+    spec.written ? `Created: specs/${deltaFile}` : `Kept: specs/${deltaFile} (already existed)`
+  );
 
   await setChangeStatus(root, change.name, 'proposed');
 
@@ -139,16 +143,42 @@ export async function runVerify(name: string | undefined, cwd = process.cwd()): 
 
 // ─── archive ─────────────────────────────────────────────────────────────────
 
-export async function runArchive(name: string | undefined, cwd = process.cwd()): Promise<WorkflowResult> {
+export async function runArchive(
+  name: string | undefined,
+  cwd = process.cwd(),
+  options: { dryRun?: boolean } = {}
+): Promise<WorkflowResult> {
   const root = requireProjectRoot(cwd);
   const changeName = await resolveSingleChange(root, name);
+
+  // 1. Merge the change's spec deltas into the project's consolidated specs.
+  const specResult = await applyChangeSpecs(root, changeName, { dryRun: options.dryRun });
+  const messages: string[] = [];
+
+  if (specResult.empty) {
+    messages.push('No spec deltas to apply.');
+  } else {
+    for (const cap of specResult.applied) {
+      const verb = cap.created ? 'created' : 'updated';
+      messages.push(
+        `Spec "${cap.capability}" ${verb}: ` +
+          `+${cap.counts.added} ~${cap.counts.modified} -${cap.counts.removed}`
+      );
+      for (const w of cap.warnings) messages.push(`  warning: ${w}`);
+    }
+  }
+
+  // 2. In dry-run, stop before touching the change on disk.
+  if (options.dryRun) {
+    messages.unshift(`Dry run for "${changeName}" (nothing written).`);
+    return { action: 'archive', change: changeName, status: 'proposed', messages };
+  }
+
+  // 3. Move the change into the archive.
   const dest = await archiveChange(root, changeName);
-  return {
-    action: 'archive',
-    change: changeName,
-    status: 'archived',
-    messages: [`Change "${changeName}" archived at ${dest}.`],
-  };
+  messages.push(`Change "${changeName}" archived at ${dest}.`);
+
+  return { action: 'archive', change: changeName, status: 'archived', messages };
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────

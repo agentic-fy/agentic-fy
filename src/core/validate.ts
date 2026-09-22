@@ -1,13 +1,16 @@
-import { readChange } from './change.js';
+import { promises as fs, existsSync } from 'fs';
+import path from 'path';
+
+import { readChange, changeDir, SPECS_DIR } from './change.js';
 import { readArtifact, parseTasks, artifactTemplate } from './artifacts.js';
 import { CHANGE_ARTIFACTS, ARTIFACT_FILES, ChangeArtifact } from './schema.js';
+import { parseSpecDelta, specDeltaTemplate } from './spec-delta.js';
 
 /**
  * Validation of a change's artifacts.
  *
  * A lean rewrite of the `validate` idea from the reference project (/base),
- * adapted to agentic-fy's model (proposal/design/tasks), WITHOUT the deltas
- * model (## ADDED/MODIFIED Requirements), without store/roots, and without dependencies.
+ * adapted to agentic-fy's model (proposal/design/tasks + YAML spec deltas).
  *
  * What the validation covers — each rule exists because the current `verify`
  * doesn't catch it and it represents an artifact that "looks ready but isn't":
@@ -15,7 +18,8 @@ import { CHANGE_ARTIFACTS, ARTIFACT_FILES, ChangeArtifact } from './schema.js';
  *  2. artifact still identical to the template (nobody wrote anything);
  *  3. artifact practically empty;
  *  4. tasks.md without any real checkbox (just loose text);
- *  5. (informational) tasks still pending.
+ *  5. (informational) tasks still pending;
+ *  6. spec deltas: malformed YAML / invalid structure / still the template.
  */
 
 export type IssueLevel = 'ERROR' | 'WARNING' | 'INFO';
@@ -127,6 +131,59 @@ function validateTasks(content: string | null): ValidationIssue[] {
 }
 
 /**
+ * Validates the change's YAML spec deltas (`specs/*.delta.yaml`).
+ *
+ * Each delta is parsed and schema-validated: malformed YAML or an invalid
+ * structure is a hard ERROR (with the file name), and a delta still holding the
+ * untouched template is a WARNING. A change with no delta files at all is only
+ * an INFO — a pure refactor legitimately changes no specs.
+ */
+async function validateSpecDeltas(root: string, changeName: string): Promise<ValidationIssue[]> {
+  const dir = path.join(changeDir(root, changeName), SPECS_DIR);
+  if (!existsSync(dir)) {
+    return [{ level: 'INFO', path: 'specs/', message: 'No specs/ directory; no spec deltas to validate.' }];
+  }
+
+  const entries = await fs.readdir(dir, { withFileTypes: true });
+  const deltaFiles = entries
+    .filter((e) => e.isFile() && e.name.endsWith('.delta.yaml'))
+    .map((e) => e.name)
+    .sort();
+
+  if (deltaFiles.length === 0) {
+    return [{ level: 'INFO', path: 'specs/', message: 'No spec deltas (*.delta.yaml) in this change.' }];
+  }
+
+  const issues: ValidationIssue[] = [];
+  for (const file of deltaFiles) {
+    const rel = `specs/${file}`;
+    const content = await fs.readFile(path.join(dir, file), 'utf8');
+
+    // Untouched template = nobody filled it in.
+    const capabilityFromName = file.replace(/\.delta\.yaml$/, '');
+    if (normalize(content) === normalize(specDeltaTemplate(capabilityFromName))) {
+      issues.push({
+        level: 'WARNING',
+        path: rel,
+        message: `${rel} still has the delta template (it was not filled in).`,
+      });
+      continue;
+    }
+
+    try {
+      parseSpecDelta(content, rel);
+    } catch (error) {
+      issues.push({
+        level: 'ERROR',
+        path: rel,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+  return issues;
+}
+
+/**
  * Validates an entire change. `strict` promotes WARNING to fatal (affects `valid`),
  * mirroring `--strict` from /base.
  */
@@ -146,6 +203,7 @@ export async function validateChange(
   }
 
   issues.push(...validateTasks(contents.get('tasks') ?? null));
+  issues.push(...(await validateSpecDeltas(root, change.name)));
 
   const errors = issues.filter((i) => i.level === 'ERROR').length;
   const warnings = issues.filter((i) => i.level === 'WARNING').length;

@@ -79,10 +79,11 @@ export function registerWorkflowCommands(
 
   program
     .command('archive [name]')
-    .description('Archives the completed change')
-    .action(async (name?: string) => {
+    .description('Applies the change spec deltas to the project specs, then archives the change')
+    .option('--dry-run', 'Preview the spec merge without writing or archiving')
+    .action(async (name: string | undefined, options: { dryRun?: boolean }) => {
       try {
-        printResult(await runArchive(name));
+        printResult(await runArchive(name, process.cwd(), { dryRun: options.dryRun }));
       } catch (error) {
         failWithError(error);
         process.exit(1);

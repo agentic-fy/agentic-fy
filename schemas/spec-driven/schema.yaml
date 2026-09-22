@@ -1,6 +1,6 @@
 name: spec-driven
 version: 1
-description: Default OpenSpec workflow - proposal → specs → design → tasks
+description: Default agentic-fy workflow - proposal → specs → design → tasks
 artifacts:
   - id: proposal
     generates: proposal.md
@@ -48,13 +48,16 @@ artifacts:
     requires: []
 
   - id: specs
-    generates: "specs/**/*.md"
-    description: Detailed specifications for the change
-    template: spec.md
+    generates: "specs/*.delta.yaml"
+    description: Structured spec deltas (YAML) for the change
+    template: spec.delta.yaml
     instruction: |
-      Create specification files that define WHAT the system should do.
+      Describe WHAT the system should do as a structured spec delta in YAML.
 
-      A spec is a behavior contract, not an implementation plan.
+      A spec is a behavior contract, not an implementation plan. In agentic-fy a
+      change does not rewrite whole specs: it carries a YAML delta per capability
+      at `specs/<capability>.delta.yaml`, and `archive` merges those deltas into
+      the project's consolidated specs at `agentic-fy/specs/<capability>.md`.
 
       Good spec content:
       - Observable behavior users or downstream systems rely on
@@ -62,89 +65,55 @@ artifacts:
       - External constraints (security, privacy, reliability, compatibility)
       - Scenarios that can be tested or explicitly validated
 
-      Avoid in specs:
-      - Internal class/function names
-      - Library or framework choices
-      - Step-by-step implementation details
-      - Detailed execution plans (those belong in design.md or tasks.md)
+      Avoid in specs: internal class/function names, library choices, and
+      step-by-step implementation details (those belong in design.md / tasks.md).
 
-      Quick test: if the implementation can change without changing externally
-      visible behavior, it likely does not belong in the spec.
+      Delta file format (`specs/<capability>.delta.yaml`):
 
-      Create one spec file per capability listed in the proposal's Capabilities section.
-      `<capability-path>` is the spec directory relative to `specs/` (for example,
-      `user-auth` or `identity/user-auth`). Preserve the full path:
-      - New capabilities: use the exact path from the proposal at `specs/<capability-path>/spec.md`. Any path segment newly introduced in the proposal must be kebab-case. Follow the project's existing organization; do not add a new domain level when the project uses a flat layout.
-      - Modified capabilities: use the exact existing path from `openspec/specs/<capability-path>/` when creating the delta at `specs/<capability-path>/spec.md`. Run `openspec list --specs` to confirm that path before writing the delta, appending `--store "<id>"` only for a registered standalone store - a mistyped or invented path targets a capability that does not exist rather than the one you meant. Do not move or rename the capability.
+      ```yaml
+      capability: data-export        # kebab-case; slashes allowed for nesting
+      # purpose is used ONLY when this delta introduces a brand-new capability:
+      purpose: Lets users take their data out of the product in a portable format.
+      operations:
+        - op: add
+          id: user-can-export-data   # STABLE kebab-case id, independent of the title
+          title: User can export data
+          statement: The system SHALL allow users to export their data in CSV format.
+          scenarios:
+            - when: the user clicks "Export"
+              then: the system downloads a CSV file with all their data
 
-      There must be at least one spec file unless the change's `.openspec.yaml`
-      sets `skip_specs: true` (no spec-level behavior change) - `openspec validate`
-      rejects a zero-delta change without that marker. If the proposal lists no
-      capabilities and `skip_specs` is not set, revisit the proposal first.
+        - op: modify                 # patch an existing requirement by id (partial)
+          id: user-can-export-data
+          set:
+            statement: The system SHALL allow users to export data in CSV or JSON.
+          addScenarios:
+            - when: the user selects JSON
+              then: the system downloads a JSON file
+          # removeScenarios: ["the user clicks \"Export\""]   # match by WHEN text
 
-      Delta operations (use ## headers):
-      - **ADDED Requirements**: New capabilities
-      - **MODIFIED Requirements**: Changed behavior - MUST include full updated content
-      - **REMOVED Requirements**: Deprecated features - MUST include **Reason** and **Migration**
-      - **RENAMED Requirements**: Name changes only - use FROM:/TO: format
-
-      Format requirements:
-      - Each requirement: `### Requirement: <name>` followed by description
-      - Use SHALL/MUST for normative requirements (avoid should/may)
-      - Each scenario: `#### Scenario: <name>` with WHEN/THEN format
-      - **CRITICAL**: Scenarios MUST use exactly 4 hashtags (`####`). Using 3 hashtags or bullets will fail silently.
-      - Every requirement MUST have at least one scenario.
-
-      New capabilities only: the delta spec's first section is `## Purpose` -
-      one or two sentences (50+ characters, or `openspec validate --strict`
-      reports it as too brief) describing what the capability is for. Archive
-      copies it into the main spec it creates; without it the new main spec is
-      left with a `TBD ... Update Purpose after archive` placeholder to fill in
-      by hand. Do NOT add `## Purpose` to a delta for an existing capability -
-      that spec already has one and the delta's is ignored. To change an
-      existing capability's Purpose - including a leftover `TBD` placeholder -
-      edit `<planningHome.root>/openspec/specs/<capability-path>/spec.md`
-      directly. `planningHome.root` comes from the `openspec instructions ...
-      --json` response. Always use it rather than a repo-relative path: it
-      resolves to the store whenever the change lives in one - whether that
-      came from `--store`, a project `store:` pointer, or a global default
-      store - and to the current repository otherwise. Do not try to work out
-      which case applies; the field already has.
-
-      MODIFIED requirements workflow:
-      1. Locate the existing requirement in `<planningHome.root>/openspec/specs/<capability-path>/spec.md` (the same store-aware root as above)
-      2. Copy the ENTIRE requirement block (from `### Requirement:` through all scenarios)
-      3. Paste under `## MODIFIED Requirements` and edit to reflect new behavior
-      4. Ensure header text matches exactly (whitespace-insensitive)
-
-      Common pitfall: Using MODIFIED with partial content loses detail at archive time.
-      If adding new concerns without changing existing behavior, use ADDED instead.
-
-      Example (a new capability, so its first section is `## Purpose`):
-      ```
-      # Spec Delta
-
-      ## Purpose
-
-      Lets users take their data out of the product in a portable format.
-
-      ## ADDED Requirements
-
-      ### Requirement: User can export data
-      The system SHALL allow users to export their data in CSV format.
-
-      #### Scenario: Successful export
-      - **WHEN** user clicks "Export" button
-      - **THEN** system downloads a CSV file with all user data
-
-      ## REMOVED Requirements
-
-      ### Requirement: Legacy export
-      **Reason**: Replaced by new export system
-      **Migration**: Use new export endpoint at /api/v2/export
+        - op: remove
+          id: legacy-export
+          reason: Replaced by the new export system
       ```
 
-      Specs should be testable - each scenario is a potential test case.
+      Rules and conventions:
+      - Reference requirements by their stable `id`, never by title. Renaming is
+        just `op: modify` with `set.title` — the id stays the same.
+      - `op: add` on an existing id fails unless the content is identical
+        (idempotent). `op: modify` on a missing id fails. `op: remove` on a
+        missing id is a no-op with a warning. The merge is deterministic
+        (remove -> modify -> add) and safe to run twice.
+      - Use SHALL/MUST for normative statements (avoid should/may).
+      - Prefer at least one scenario per requirement; each scenario is a test case.
+      - `purpose` only seeds a NEW capability's consolidated spec; for an existing
+        capability, edit `agentic-fy/specs/<capability>.md` directly to change it.
+      - Malformed YAML or an invalid structure fails loudly with the offending
+        field — nothing is applied silently.
+
+      Create one delta file per capability listed in the proposal's Capabilities
+      section. If the proposal lists no capabilities and there is no spec-level
+      behavior change (pure refactor, tooling, docs), it is fine to have no delta.
     requires:
       - proposal
 

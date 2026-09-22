@@ -1,6 +1,8 @@
+import { promises as fs, existsSync } from 'fs';
 import chalk from 'chalk';
 
 import { listChangeSummaries, listSpecIds, ChangeSummary } from './inspect.js';
+import { resolveProjectPaths } from './change.js';
 
 /**
  * Dashboard data and rendering (`view`).
@@ -19,7 +21,22 @@ export interface DashboardData {
   /** Ready changes (verified). */
   done: ChangeSummary[];
   specs: string[];
-  totals: { changes: number; specs: number; tasksTotal: number; tasksDone: number };
+  totals: {
+    changes: number;
+    /** Archived changes = spec merges applied over the project's lifetime. */
+    merged: number;
+    specs: number;
+    tasksTotal: number;
+    tasksDone: number;
+  };
+}
+
+/** Counts the archived changes (each archive applied a spec merge). */
+async function countMerged(root: string): Promise<number> {
+  const { archiveDir } = resolveProjectPaths(root);
+  if (!existsSync(archiveDir)) return 0;
+  const entries = await fs.readdir(archiveDir, { withFileTypes: true });
+  return entries.filter((e) => e.isDirectory()).length;
 }
 
 /** Classifies a change's status into one of the panel's three groups. */
@@ -30,9 +47,10 @@ function bucketOf(status: string): 'draft' | 'active' | 'done' {
 }
 
 export async function buildDashboard(root: string): Promise<DashboardData> {
-  const [summaries, specs] = await Promise.all([
+  const [summaries, specs, merged] = await Promise.all([
     listChangeSummaries(root),
     listSpecIds(root),
+    countMerged(root),
   ]);
 
   const draft: ChangeSummary[] = [];
@@ -53,7 +71,7 @@ export async function buildDashboard(root: string): Promise<DashboardData> {
     active,
     done,
     specs,
-    totals: { changes: summaries.length, specs: specs.length, tasksTotal, tasksDone },
+    totals: { changes: summaries.length, merged, specs: specs.length, tasksTotal, tasksDone },
   };
 }
 
@@ -79,12 +97,14 @@ export function renderDashboard(data: DashboardData): string {
   lines.push(chalk.bold('agentic-fy Dashboard'));
   lines.push(rule);
 
-  // Summary.
+  // Summary with an overall task progress bar.
   const { totals } = data;
+  const bar = progressBar(totals.tasksDone, totals.tasksTotal);
   lines.push(
-    `Changes: ${totals.changes}  ·  Specs: ${totals.specs}  ·  ` +
-      `Tasks: ${totals.tasksDone}/${totals.tasksTotal} (${pct(totals.tasksDone, totals.tasksTotal)})`
+    `Changes: ${totals.changes}  ·  Merged: ${totals.merged}  ·  Specs: ${totals.specs}  ·  ` +
+      `Tasks: ${totals.tasksDone}/${totals.tasksTotal}`
   );
+  lines.push(`${bar} ${chalk.dim(pct(totals.tasksDone, totals.tasksTotal))}`);
 
   if (data.draft.length > 0) {
     lines.push('');

@@ -83,7 +83,7 @@ agentic-fy/
 ├── design.md
 ├── tasks.md
 ├── specs/
-│   └── spec.md
+│   └── &lt;change-name&gt;.delta.yaml
 └── .agentic-fy.yaml    # metadata (name, status, dates)</code></pre>
 
       <h2>Understanding the artifacts</h2>
@@ -93,7 +93,7 @@ agentic-fy/
         </thead>
         <tbody>
           <tr><td><code>proposal.md</code></td><td>The "why" and "what" — intent, scope, and approach</td></tr>
-          <tr><td><code>specs/spec.md</code></td><td>Requirements and acceptance criteria</td></tr>
+          <tr><td><code>specs/&lt;capability&gt;.delta.yaml</code></td><td>Spec delta: how the requirements change (merged into the project specs on archive)</td></tr>
           <tr><td><code>design.md</code></td><td>The "how" — technical approach and architecture decisions</td></tr>
           <tr><td><code>tasks.md</code></td><td>Implementation checklist with checkboxes</td></tr>
         </tbody>
@@ -113,10 +113,11 @@ agentic-fy init</code></pre>
 Created: proposal.md
 Created: design.md
 Created: tasks.md
-Created: specs/spec.md</code></pre>
+Created: specs/add-dark-mode.delta.yaml</code></pre>
 
       <h3>3. Fill in the artifacts</h3>
-      <p>Edit the files in <code>agentic-fy/changes/add-dark-mode/</code> and write the real tasks in <code>tasks.md</code>:</p>
+      <p>Edit the files in <code>agentic-fy/changes/add-dark-mode/</code>. Write the real tasks in
+      <code>tasks.md</code> and describe the requirement changes in the spec delta:</p>
       <pre><code># Tasks — add-dark-mode
 
 - [ ] 1. Create ThemeContext with light/dark state
@@ -143,9 +144,12 @@ All tasks marked as completed.
 Status updated to "verified".</code></pre>
 
       <h3>6. Archive</h3>
+      <p>Archiving merges the change's spec delta into the project's consolidated specs, then moves the
+      change to history. Preview the merge first with <code>agentic-fy archive --dry-run</code>.</p>
       <pre><code>$ agentic-fy archive
 
 [archive] add-dark-mode
+Spec "dark-mode" created: +1 ~0 -0
 Change "add-dark-mode" archived at agentic-fy/changes/archive/add-dark-mode.</code></pre>
 
       <h2>Letting the AI drive (MCP)</h2>
