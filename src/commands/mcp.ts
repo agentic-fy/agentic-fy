@@ -1,9 +1,9 @@
 import type { Command } from 'commander';
 
 /**
- * Registra o comando `mcp`, que sobe o servidor MCP via stdio expondo os
- * comandos de workflow como tools. O SDK é importado de forma lazy para não
- * penalizar o startup dos comandos comuns.
+ * Registers the `mcp` command, which starts the MCP server over stdio exposing
+ * the workflow commands as tools. The SDK is imported lazily so as not to
+ * penalize the startup of the common commands.
  */
 export function registerMcpCommand(
   program: Command,
@@ -11,13 +11,13 @@ export function registerMcpCommand(
 ): void {
   program
     .command('mcp')
-    .description('Inicia o servidor MCP (stdio) expondo as tools de workflow')
+    .description('Starts the MCP server (stdio) exposing the workflow tools')
     .action(async () => {
       try {
         const { startMcpServer } = await import('../mcp/server.js');
         await startMcpServer();
-        // startMcpServer resolve quando conecta; o processo segue vivo
-        // enquanto o transporte stdio estiver aberto.
+        // startMcpServer resolves once connected; the process stays alive
+        // while the stdio transport is open.
       } catch (error) {
         failWithError(error);
         process.exit(1);

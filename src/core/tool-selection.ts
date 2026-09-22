@@ -1,19 +1,19 @@
 import { AI_TOOLS, AiTool, ALL_TOOL_IDS, detectTools, findTool } from './tools.js';
 
 /**
- * Seleção das ferramentas de IA no `init`.
+ * AI tool selection during `init`.
  *
- * Espelha o `getSelectedTools` do projeto de referência (/base): resolve uma
- * flag não-interativa (`--tools`), detecta ferramentas já usadas para
- * pré-selecionar, e cai num prompt interativo quando há TTY. Reescrito enxuto
- * e sem dependências: o prompt usa o `readline` nativo do Node.
+ * Mirrors `getSelectedTools` from the reference project (/base): resolves a
+ * non-interactive flag (`--tools`), detects already-used tools to pre-select
+ * them, and falls back to an interactive prompt when there's a TTY. Rewritten
+ * lean and dependency-free: the prompt uses Node's native `readline`.
  */
 
 /**
- * Interpreta o valor de `--tools`. Retorna:
- *  - `AiTool[]` quando a flag foi informada (inclui lista vazia p/ "none");
- *  - `null` quando a flag não foi informada (cai para detecção/prompt).
- * Lança em ids inválidos, com sugestão dos válidos (como no /base).
+ * Interprets the value of `--tools`. Returns:
+ *  - `AiTool[]` when the flag was provided (includes an empty list for "none");
+ *  - `null` when the flag was not provided (falls back to detection/prompt).
+ * Throws on invalid ids, suggesting the valid ones (like in /base).
  */
 export function resolveToolsFlag(value: string | undefined): AiTool[] | null {
   if (value === undefined) return null;
@@ -40,34 +40,34 @@ export function resolveToolsFlag(value: string | undefined): AiTool[] | null {
 
   if (invalid.length > 0) {
     throw new Error(
-      `Ferramenta(s) inválida(s): ${invalid.join(', ')}. ` +
-        `Válidas: ${ALL_TOOL_IDS.join(', ')}. ` +
-        `Use --tools all, --tools none, ou --tools kiro,cursor,...`
+      `Invalid tool(s): ${invalid.join(', ')}. ` +
+        `Valid: ${ALL_TOOL_IDS.join(', ')}. ` +
+        `Use --tools all, --tools none, or --tools kiro,cursor,...`
     );
   }
   return tools;
 }
 
-/** True quando dá para abrir um prompt interativo. */
+/** True when an interactive prompt can be opened. */
 export function canPromptInteractively(): boolean {
   return Boolean(process.stdin.isTTY && process.stdout.isTTY);
 }
 
 export interface ToolSelectionOptions {
-  /** Valor cru de --tools (undefined = não informado). */
+  /** Raw value of --tools (undefined = not provided). */
   toolsFlag?: string;
-  /** Permite forçar modo não-interativo (ex.: testes). */
+  /** Allows forcing non-interactive mode (e.g. tests). */
   interactive?: boolean;
 }
 
 /**
- * Decide o conjunto final de ferramentas a configurar.
+ * Decides the final set of tools to configure.
  *
- * Precedência (espelha o /base):
- *  1. `--tools` (explícito, inclusive `none`);
- *  2. prompt interativo (quando há TTY), pré-selecionando as detectadas;
- *  3. fallback não-interativo: NÃO configura nada (mantém o comportamento
- *     histórico do init do agentic), apenas informando como escolher depois.
+ * Precedence (mirrors /base):
+ *  1. `--tools` (explicit, including `none`);
+ *  2. interactive prompt (when there's a TTY), pre-selecting the detected ones;
+ *  3. non-interactive fallback: does NOT configure anything (keeps agentic-fy's
+ *     historical init behavior), only informing how to choose later.
  */
 export async function selectTools(
   root: string,
@@ -82,8 +82,8 @@ export async function selectTools(
   const interactive = options.interactive ?? canPromptInteractively();
 
   if (!interactive) {
-    // Sem flag e sem TTY: não dá para perguntar. Mantém o init utilizável em
-    // CI/pipes sem configurar ferramenta nenhuma.
+    // No flag and no TTY: can't ask. Keeps init usable in CI/pipes without
+    // configuring any tool.
     return [];
   }
 
@@ -91,8 +91,8 @@ export async function selectTools(
 }
 
 /**
- * Prompt interativo por número, com readline nativo. Pré-seleciona as
- * ferramentas detectadas (marcadas com "*"). Enter vazio aceita a pré-seleção.
+ * Interactive prompt by number, with native readline. Pre-selects the detected
+ * tools (marked with "*"). An empty Enter accepts the pre-selection.
  */
 async function promptForTools(preselected: AiTool[]): Promise<AiTool[]> {
   const readline = await import('node:readline/promises');
@@ -101,18 +101,18 @@ async function promptForTools(preselected: AiTool[]): Promise<AiTool[]> {
   const preselectedIds = new Set(preselected.map((t) => t.id));
 
   try {
-    console.log('Para qual(is) ferramenta(s) configurar o agentic (MCP)?');
+    console.log('Which tool(s) should agentic-fy be configured for (MCP)?');
     AI_TOOLS.forEach((tool, i) => {
       const mark = preselectedIds.has(tool.id) ? ' *' : '';
       console.log(`  ${i + 1}) ${tool.name}${mark}`);
     });
-    console.log('  0) Nenhuma');
+    console.log('  0) None');
     const hint = preselected.length
-      ? `Detectada(s): ${preselected.map((t) => t.name).join(', ')}. `
+      ? `Detected: ${preselected.map((t) => t.name).join(', ')}. `
       : '';
     const answer = (
       await rl.question(
-        `${hint}Escolha os números separados por vírgula (Enter aceita a[s] detectada[s]): `
+        `${hint}Choose the numbers separated by commas (Enter accepts the detected one[s]): `
       )
     ).trim();
 

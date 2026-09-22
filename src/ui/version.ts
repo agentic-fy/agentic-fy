@@ -1,50 +1,66 @@
 import type { Command } from 'commander';
 
 /**
- * Logo ASCII do agentic exibido no `--version`.
- * Usa sequências ANSI diretas para manter o visual mesmo sem chalk.
+ * agentic-fy ASCII logo shown in `--version`.
+ * Uses direct ANSI sequences to keep the look even without chalk.
  */
 const PURPLE = "\x1b[38;5;92m";
 const RESET = "\x1b[0m";
 
-const glyphs: Record<string, string[]> = {
-  A: [" ███ ", "█   █", "█████", "█   █", "█   █"],
-  G: [" ████", "█    ", "█  ██", "█   █", " ███ "],
-  E: ["█████", "█    ", "████ ", "█    ", "█████"],
-  N: ["█   █", "██  █", "█ █ █", "█  ██", "█   █"],
-  T: ["█████", "  █  ", "  █  ", "  █  ", "  █  "],
-  I: ["███", " █ ", " █ ", " █ ", "███"],
-  C: [" ████", "█    ", "█    ", "█    ", " ████"],
-};
+/** Upright block banner (no italic slant). */
+const BANNER = [
+  " █████╗  ██████╗ ███████╗███╗   ██╗████████╗██╗ ██████╗",
+  "██╔══██╗██╔════╝ ██╔════╝████╗  ██║╚══██╔══╝██║██╔════╝",
+  "███████║██║  ███╗█████╗  ██╔██╗ ██║   ██║   ██║██║     ",
+  "██╔══██║██║   ██║██╔══╝  ██║╚██╗██║   ██║   ██║██║     ",
+  "██║  ██║╚██████╔╝███████╗██║ ╚████║   ██║   ██║╚██████╗",
+  "╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚═╝ ╚═════╝ ",
+];
 
-const render = (text: string, slant = false): string => {
-  const rows = Array.from({ length: 5 }, (_, row) => {
-    const line = [...text].map((ch) => glyphs[ch][row]).join(" ");
-    // deslocamento progressivo para dar efeito itálico
-    return slant ? " ".repeat(4 - row) + line : line;
-  });
-  return rows.map((r) => `${PURPLE}${r}${RESET}`).join("\n");
-};
+/** Renders the banner in purple. */
+function renderBanner(): string {
+  return BANNER.map((row) => `${PURPLE}${row}${RESET}`).join("\n");
+}
+
+/**
+ * Builds a centered, boxed label placed below the banner.
+ * The box width matches the banner width so it lines up under the logo.
+ */
+function renderLabel(text: string): string {
+  const bannerWidth = Math.max(...BANNER.map((r) => r.length));
+  const inner = bannerWidth - 2; // space between the box borders
+  const padTotal = Math.max(0, inner - text.length);
+  const left = Math.floor(padTotal / 2);
+  const right = padTotal - left;
+  const top = `┌${"─".repeat(inner)}┐`;
+  const mid = `│${" ".repeat(left)}${text}${" ".repeat(right)}│`;
+  const bottom = `└${"─".repeat(inner)}┘`;
+  return [top, mid, bottom].map((r) => `${PURPLE}${r}${RESET}`).join("\n");
+}
 
 export const logo = `
-${render("AGENTIC", true)}
+${renderBanner()}
 `;
 
 /**
- * Monta o texto do `--version`: logo + versão + lista de todos os comandos
- * disponíveis (nome, argumentos e descrição), lidos do próprio program.
+ * Builds the `--version` text: logo + version + list of all available commands
+ * (name, arguments, and description), read from the program itself.
  */
 export function renderVersion(program: Command, version: string): string {
   const noColor = process.env.NO_COLOR === '1' || process.env.NO_COLOR === 'true';
   const bold = (s: string) => (noColor ? s : `\x1b[1m${s}\x1b[0m`);
   const dim = (s: string) => (noColor ? s : `\x1b[2m${s}\x1b[0m`);
-  const header = noColor ? logo.replace(/\x1b\[[0-9;]*m/g, '') : logo;
+  const strip = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, '');
+
+  const label = renderLabel(`ATENTIC FY - V${version}`);
+  const header = noColor ? strip(logo) : logo;
+  const labelBlock = noColor ? strip(label) : label;
 
   const lines: string[] = [];
   lines.push(header);
-  lines.push(`${bold('agentic')} v${version}`);
+  lines.push(labelBlock);
   lines.push('');
-  lines.push(bold('Comandos disponíveis:'));
+  lines.push(bold('Available commands:'));
 
   const commands = program.commands.filter((cmd) => !(cmd as { _hidden?: boolean })._hidden);
   const usages = commands.map((cmd) => cmd.name() + (cmd.usage() ? ` ${cmd.usage()}` : ''));

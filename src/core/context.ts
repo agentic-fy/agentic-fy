@@ -2,13 +2,13 @@ import { readProjectConfig } from './change.js';
 import { listChangeSummaries, listSpecIds, ChangeSummary } from './inspect.js';
 
 /**
- * `context`: brief do projeto para um agente de IA.
+ * `context`: project brief for an AI agent.
  *
- * Reescreve, enxuto, a ideia do `context` do projeto de referência (/base) —
- * lá voltado a "working set" entre stores/roots — para o modelo single-repo
- * do agentic: reúne, num só lugar, a config, as changes ativas (com estágio e
- * progresso) e as specs do projeto. Serve para o agente ler o estado inteiro
- * de uma vez. Função pura.
+ * A lean rewrite of the `context` idea from the reference project (/base) —
+ * there focused on a "working set" across stores/roots — for agentic-fy's
+ * single-repo model: gathers, in one place, the config, the active changes
+ * (with stage and progress), and the project specs. It lets the agent read the
+ * entire state at once. Pure function.
  */
 
 export interface ProjectContext {
@@ -34,31 +34,31 @@ export async function projectContext(root: string): Promise<ProjectContext> {
   };
 }
 
-/** Renderiza o contexto como texto legível (markdown-ish) para o agente. */
+/** Renders the context as readable text (markdown-ish) for the agent. */
 export function renderContext(ctx: ProjectContext): string {
   const lines: string[] = [];
-  lines.push(`# Contexto do projeto agentic`);
+  lines.push(`# agentic-fy project context`);
   lines.push('');
-  lines.push(`Raiz: ${ctx.root}`);
+  lines.push(`Root: ${ctx.root}`);
   lines.push(`Schema: ${ctx.schema}`);
   lines.push(`Workflow: ${ctx.workflow.join(' → ')}`);
   lines.push('');
 
-  lines.push(`## Changes ativas (${ctx.changes.length})`);
+  lines.push(`## Active changes (${ctx.changes.length})`);
   if (ctx.changes.length === 0) {
-    lines.push('Nenhuma change ativa.');
+    lines.push('No active changes.');
   } else {
     for (const c of ctx.changes) {
       lines.push(
-        `- ${c.name} (${c.status}) — ${c.title} [tarefas ${c.tasks.completed}/${c.tasks.total}]`
+        `- ${c.name} (${c.status}) — ${c.title} [tasks ${c.tasks.completed}/${c.tasks.total}]`
       );
     }
   }
   lines.push('');
 
-  lines.push(`## Specs do projeto (${ctx.specs.length})`);
+  lines.push(`## Project specs (${ctx.specs.length})`);
   if (ctx.specs.length === 0) {
-    lines.push('Nenhuma spec.');
+    lines.push('No specs.');
   } else {
     for (const s of ctx.specs) lines.push(`- ${s}`);
   }

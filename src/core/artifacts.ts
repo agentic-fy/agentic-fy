@@ -11,12 +11,12 @@ export interface ArtifactState {
   exists: boolean;
 }
 
-/** Caminho absoluto de um artefato dentro de uma change. */
+/** Absolute path of an artifact within a change. */
 export function artifactPath(root: string, changeName: string, id: ChangeArtifact): string {
   return path.join(changeDir(root, changeName), ARTIFACT_FILES[id]);
 }
 
-/** Estado (existe ou não) de todos os artefatos de uma change. */
+/** State (exists or not) of all artifacts of a change. */
 export function artifactStates(root: string, changeName: string): ArtifactState[] {
   return CHANGE_ARTIFACTS.map((id) => {
     const p = artifactPath(root, changeName, id);
@@ -37,8 +37,8 @@ export async function readArtifact(
 }
 
 /**
- * Escreve um artefato. Por padrão não sobrescreve conteúdo existente
- * (para não destruir trabalho); use `overwrite` para forçar.
+ * Writes an artifact. By default it does not overwrite existing content
+ * (so as not to destroy work); use `overwrite` to force it.
  */
 export async function writeArtifact(
   root: string,
@@ -56,7 +56,7 @@ export async function writeArtifact(
   return { path: p, written: true };
 }
 
-/** Escreve um arquivo de spec dentro de `<change>/specs/`. */
+/** Writes a spec file inside `<change>/specs/`. */
 export async function writeSpec(
   root: string,
   changeName: string,
@@ -74,67 +74,67 @@ export async function writeSpec(
   return { path: p, written: true };
 }
 
-// ─── Templates dos artefatos ─────────────────────────────────────────────────
+// ─── Artifact templates ──────────────────────────────────────────────────────
 
 export function proposalTemplate(changeName: string): string {
-  return `# Proposta — ${changeName}
+  return `# Proposal — ${changeName}
 
-## Por quê
-Descreva o problema e a motivação.
+## Why
+Describe the problem and the motivation.
 
-## O quê
-Resumo da mudança proposta e do resultado esperado.
+## What
+Summary of the proposed change and the expected outcome.
 
-## Escopo
-- Dentro do escopo:
-- Fora do escopo:
+## Scope
+- In scope:
+- Out of scope:
 `;
 }
 
 export function designTemplate(changeName: string): string {
   return `# Design — ${changeName}
 
-## Contexto
-Decisões técnicas e restrições relevantes.
+## Context
+Relevant technical decisions and constraints.
 
-## Arquitetura
-Componentes, fluxos e integrações.
+## Architecture
+Components, flows, and integrations.
 
-## Alternativas consideradas
-- Opção A:
-- Opção B:
+## Alternatives considered
+- Option A:
+- Option B:
 
-## Riscos
-- Risco / mitigação:
+## Risks
+- Risk / mitigation:
 `;
 }
 
 export function tasksTemplate(changeName: string): string {
-  return `# Tarefas — ${changeName}
+  return `# Tasks — ${changeName}
 
-Plano de implementação incremental.
+Incremental implementation plan.
 
-- [ ] 1. Primeira tarefa
-- [ ] 2. Segunda tarefa
+- [ ] 1. First task
+- [ ] 2. Second task
 `;
 }
 
 export function specTemplate(changeName: string): string {
-  return `# Requisitos — ${changeName}
+  return `# Requirements — ${changeName}
 
-## Visão geral
-Descreva o objetivo.
+## Overview
+Describe the goal.
 
-## Requisitos
-### R1 — Título
-O sistema DEVE ...
+## Requirements
+### R1 — Title
+The system SHALL ...
 
-Critérios de aceite:
+Acceptance criteria:
 - ...
 `;
 }
 
-/** Retorna o template do artefato a partir do id. */
+/** Returns the artifact template from the id. */
 export function artifactTemplate(id: ChangeArtifact, changeName: string): string {
   switch (id) {
     case 'proposal':
@@ -146,7 +146,7 @@ export function artifactTemplate(id: ChangeArtifact, changeName: string): string
   }
 }
 
-/** Extrai as linhas de tarefa (checkbox) de um conteúdo de tasks.md. */
+/** Extracts the task lines (checkboxes) from tasks.md content. */
 export interface TaskLine {
   raw: string;
   done: boolean;

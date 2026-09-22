@@ -22,8 +22,8 @@ function printResult(result: WorkflowResult): void {
 }
 
 /**
- * Registra os 5 comandos de workflow. Cada handler apenas delega à função
- * pura correspondente em core/workflow.ts e formata a saída.
+ * Registers the 5 workflow commands. Each handler simply delegates to the
+ * corresponding pure function in core/workflow.ts and formats the output.
  */
 export function registerWorkflowCommands(
   program: Command,
@@ -31,7 +31,7 @@ export function registerWorkflowCommands(
 ): void {
   program
     .command('explore')
-    .description('Mapeia o problema e entende a codebase (modo pensamento)')
+    .description('Maps the problem and understands the codebase (thinking mode)')
     .action(async () => {
       try {
         printResult(await runExplore());
@@ -42,11 +42,11 @@ export function registerWorkflowCommands(
     });
 
   program
-    .command('propose <nome>')
-    .description('Cria a change e rascunha proposal.md, specs/, design.md, tasks.md')
-    .action(async (nome: string) => {
+    .command('propose <name>')
+    .description('Creates the change and drafts proposal.md, specs/, design.md, tasks.md')
+    .action(async (name: string) => {
       try {
-        printResult(await runPropose(nome));
+        printResult(await runPropose(name));
       } catch (error) {
         failWithError(error);
         process.exit(1);
@@ -54,11 +54,11 @@ export function registerWorkflowCommands(
     });
 
   program
-    .command('apply [nome]')
-    .description('Implementa as tarefas de tasks.md')
-    .action(async (nome?: string) => {
+    .command('apply [name]')
+    .description('Implements the tasks in tasks.md')
+    .action(async (name?: string) => {
       try {
-        printResult(await runApply(nome));
+        printResult(await runApply(name));
       } catch (error) {
         failWithError(error);
         process.exit(1);
@@ -66,11 +66,11 @@ export function registerWorkflowCommands(
     });
 
   program
-    .command('verify [nome]')
-    .description('Verifica a implementação contra a spec')
-    .action(async (nome?: string) => {
+    .command('verify [name]')
+    .description('Verifies the implementation against the spec')
+    .action(async (name?: string) => {
       try {
-        printResult(await runVerify(nome));
+        printResult(await runVerify(name));
       } catch (error) {
         failWithError(error);
         process.exit(1);
@@ -78,11 +78,11 @@ export function registerWorkflowCommands(
     });
 
   program
-    .command('archive [nome]')
-    .description('Arquiva a change concluída')
-    .action(async (nome?: string) => {
+    .command('archive [name]')
+    .description('Archives the completed change')
+    .action(async (name?: string) => {
       try {
-        printResult(await runArchive(nome));
+        printResult(await runArchive(name));
       } catch (error) {
         failWithError(error);
         process.exit(1);

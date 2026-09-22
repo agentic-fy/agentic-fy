@@ -19,7 +19,7 @@ import { nearestMatches } from '../core/match.js';
 import { CHANGE_ARTIFACTS, type ChangeArtifact } from '../core/schema.js';
 
 /**
- * Converte um WorkflowResult no formato de retorno de tool do MCP.
+ * Converts a WorkflowResult into the MCP tool return format.
  */
 function toToolResult(result: WorkflowResult) {
   const text = [
@@ -30,31 +30,31 @@ function toToolResult(result: WorkflowResult) {
   return { content: [{ type: 'text' as const, text }] };
 }
 
-/** Empacota um texto simples no formato de retorno de tool do MCP. */
+/** Wraps plain text in the MCP tool return format. */
 function textResult(text: string) {
   return { content: [{ type: 'text' as const, text }] };
 }
 
 /**
- * Resolve o nome de uma change existente ou lança com sugestão "did you mean".
- * Compartilhado pelas tools show/validate.
+ * Resolves the name of an existing change or throws with a "did you mean" suggestion.
+ * Shared by the show/validate tools.
  */
 async function resolveChangeName(root: string, name: string): Promise<string> {
   const names = (await listChanges(root)).map((c) => c.name);
   if (names.includes(name)) return name;
   const suggestions = nearestMatches(name, names);
   const hint = suggestions.length
-    ? ` Você quis dizer: ${suggestions.join(', ')}?`
+    ? ` Did you mean: ${suggestions.join(', ')}?`
     : names.length
-      ? ` Ativas: ${names.join(', ')}.`
+      ? ` Active: ${names.join(', ')}.`
       : '';
-  throw new Error(`Change "${name}" não encontrada.${hint}`);
+  throw new Error(`Change "${name}" not found.${hint}`);
 }
 
-/** Renderiza um relatório de validação como texto legível para o agente. */
+/** Renders a validation report as readable text for the agent. */
 function renderReport(report: ValidationReport): string {
   const lines = [
-    report.valid ? `✓ ${report.change} — válida` : `✗ ${report.change} — com problemas`,
+    report.valid ? `✓ ${report.change} — valid` : `✗ ${report.change} — has issues`,
   ];
   for (const issue of report.issues) {
     lines.push(`  [${issue.level}] ${issue.path}: ${issue.message}`);
@@ -63,21 +63,21 @@ function renderReport(report: ValidationReport): string {
 }
 
 /**
- * Cria o servidor MCP do agentic e registra uma tool por comando de workflow.
- * Cada tool delega à mesma função pura usada pelo CLI (core/workflow.ts),
- * evitando duplicação de lógica.
+ * Creates the agentic-fy MCP server and registers one tool per workflow command.
+ * Each tool delegates to the same pure function used by the CLI (core/workflow.ts),
+ * avoiding logic duplication.
  */
 export function createMcpServer(): McpServer {
   const server = new McpServer({
-    name: 'agentic',
-    version: '0.1.0',
+    name: 'agentic-fy',
+    version: '0.1.2',
   });
 
   server.registerTool(
     'explore',
     {
       title: 'Explore',
-      description: 'Mapeia o problema e entende a codebase (modo pensamento).',
+      description: 'Maps the problem and understands the codebase (thinking mode).',
       inputSchema: {},
     },
     async () => toToolResult(await runExplore())
@@ -87,59 +87,59 @@ export function createMcpServer(): McpServer {
     'propose',
     {
       title: 'Propose',
-      description: 'Cria a change e rascunha proposal.md, specs/, design.md, tasks.md.',
-      inputSchema: { nome: z.string().describe('Nome da change') },
+      description: 'Creates the change and drafts proposal.md, specs/, design.md, tasks.md.',
+      inputSchema: { name: z.string().describe('Change name') },
     },
-    async ({ nome }) => toToolResult(await runPropose(nome))
+    async ({ name }) => toToolResult(await runPropose(name))
   );
 
   server.registerTool(
     'apply',
     {
       title: 'Apply',
-      description: 'Implementa as tarefas de tasks.md.',
-      inputSchema: { nome: z.string().optional().describe('Nome da change (opcional)') },
+      description: 'Implements the tasks in tasks.md.',
+      inputSchema: { name: z.string().optional().describe('Change name (optional)') },
     },
-    async ({ nome }) => toToolResult(await runApply(nome))
+    async ({ name }) => toToolResult(await runApply(name))
   );
 
   server.registerTool(
     'verify',
     {
       title: 'Verify',
-      description: 'Verifica a implementação contra a spec.',
-      inputSchema: { nome: z.string().optional().describe('Nome da change (opcional)') },
+      description: 'Verifies the implementation against the spec.',
+      inputSchema: { name: z.string().optional().describe('Change name (optional)') },
     },
-    async ({ nome }) => toToolResult(await runVerify(nome))
+    async ({ name }) => toToolResult(await runVerify(name))
   );
 
   server.registerTool(
     'archive',
     {
       title: 'Archive',
-      description: 'Arquiva a change concluída.',
-      inputSchema: { nome: z.string().optional().describe('Nome da change (opcional)') },
+      description: 'Archives the completed change.',
+      inputSchema: { name: z.string().optional().describe('Change name (optional)') },
     },
-    async ({ nome }) => toToolResult(await runArchive(nome))
+    async ({ name }) => toToolResult(await runArchive(name))
   );
 
   server.registerTool(
     'list',
     {
       title: 'List',
-      description: 'Lista as changes ativas com status, título e progresso de tarefas.',
+      description: 'Lists the active changes with status, title, and task progress.',
       inputSchema: {},
     },
     async () => {
       const root = requireProjectRoot();
       const summaries = await listChangeSummaries(root);
       if (summaries.length === 0) {
-        return textResult('Nenhuma change ativa. Use "propose <nome>" primeiro.');
+        return textResult('No active changes. Use "propose <name>" first.');
       }
       const text = summaries
         .map(
           (s) =>
-            `${s.name} (${s.status}): ${s.title} [tarefas ${s.tasks.completed}/${s.tasks.total}]`
+            `${s.name} (${s.status}): ${s.title} [tasks ${s.tasks.completed}/${s.tasks.total}]`
         )
         .join('\n');
       return textResult(text);
@@ -151,20 +151,20 @@ export function createMcpServer(): McpServer {
     {
       title: 'Show',
       description:
-        'Mostra uma change: resumo (status, título, artefatos, tarefas) ou o conteúdo de um artefato.',
+        'Shows a change: summary (status, title, artifacts, tasks) or the content of an artifact.',
       inputSchema: {
-        nome: z.string().describe('Nome da change'),
-        artefato: z
+        name: z.string().describe('Change name'),
+        artifact: z
           .enum(CHANGE_ARTIFACTS)
           .optional()
-          .describe('Opcional: retorna o conteúdo cru do artefato (proposal|design|tasks)'),
+          .describe('Optional: returns the raw content of the artifact (proposal|design|tasks)'),
       },
     },
-    async ({ nome, artefato }) => {
+    async ({ name, artifact }) => {
       const root = requireProjectRoot();
-      const changeName = await resolveChangeName(root, nome);
-      if (artefato) {
-        return textResult(await readChangeArtifact(root, changeName, artefato as ChangeArtifact));
+      const changeName = await resolveChangeName(root, name);
+      if (artifact) {
+        return textResult(await readChangeArtifact(root, changeName, artifact as ChangeArtifact));
       }
       const d = await showChange(root, changeName);
       const artifacts = d.artifacts
@@ -172,11 +172,11 @@ export function createMcpServer(): McpServer {
         .join('\n');
       const text = [
         `${d.name} (${d.status})`,
-        `Título: ${d.title}`,
-        `Tarefas: ${d.tasks.completed}/${d.tasks.total} concluídas`,
-        'Artefatos:',
+        `Title: ${d.title}`,
+        `Tasks: ${d.tasks.completed}/${d.tasks.total} completed`,
+        'Artifacts:',
         artifacts,
-        ...(d.specs.length ? [`Specs da change: ${d.specs.join(', ')}`] : []),
+        ...(d.specs.length ? [`Change specs: ${d.specs.join(', ')}`] : []),
       ].join('\n');
       return textResult(text);
     }
@@ -187,27 +187,27 @@ export function createMcpServer(): McpServer {
     {
       title: 'Validate',
       description:
-        'Valida os artefatos de uma change (ou de todas): artefato ausente, template intocado, tasks sem checkbox.',
+        'Validates the artifacts of a change (or of all): missing artifact, untouched template, tasks without a checkbox.',
       inputSchema: {
-        nome: z.string().optional().describe('Nome da change (omita para usar --all quando houver uma só)'),
-        todas: z.boolean().optional().describe('Valida todas as changes ativas'),
-        strict: z.boolean().optional().describe('Trata avisos (WARNING) como falha'),
+        name: z.string().optional().describe('Change name (omit to use --all when there is only one)'),
+        all: z.boolean().optional().describe('Validates all active changes'),
+        strict: z.boolean().optional().describe('Treats warnings (WARNING) as failures'),
       },
     },
-    async ({ nome, todas, strict }) => {
+    async ({ name, all, strict }) => {
       const root = requireProjectRoot();
       let targets: string[];
-      if (todas) {
+      if (all) {
         targets = (await listChanges(root)).map((c) => c.name).sort();
-      } else if (nome) {
-        targets = [await resolveChangeName(root, nome)];
+      } else if (name) {
+        targets = [await resolveChangeName(root, name)];
       } else {
         const active = await listChanges(root);
         if (active.length === 1) targets = [active[0].name];
-        else if (active.length === 0) throw new Error('Nenhuma change ativa. Use "propose <nome>".');
+        else if (active.length === 0) throw new Error('No active changes. Use "propose <name>".');
         else
           throw new Error(
-            `Há várias changes ativas (${active.map((c) => c.name).join(', ')}). Informe o nome ou use todas=true.`
+            `There are multiple active changes (${active.map((c) => c.name).join(', ')}). Provide the name or use all=true.`
           );
       }
       const reports = await Promise.all(targets.map((t) => validateChange(root, t, strict)));
@@ -219,19 +219,19 @@ export function createMcpServer(): McpServer {
     'status',
     {
       title: 'Status',
-      description: 'Panorama das changes ativas: estágio, progresso de tarefas e problemas.',
+      description: 'Overview of active changes: stage, task progress, and issues.',
       inputSchema: {},
     },
     async () => {
       const root = requireProjectRoot();
       const status = await projectStatus(root);
-      if (status.total === 0) return textResult('Nenhuma change ativa.');
+      if (status.total === 0) return textResult('No active changes.');
       const lines = [
-        `Changes ativas: ${status.total}`,
+        `Active changes: ${status.total}`,
         ...status.changes.map(
           (c) =>
-            `- ${c.name} (${c.status}): tarefas ${c.tasks.completed}/${c.tasks.total}, ` +
-            `${c.errors} erro(s), ${c.warnings} aviso(s)`
+            `- ${c.name} (${c.status}): tasks ${c.tasks.completed}/${c.tasks.total}, ` +
+            `${c.errors} error(s), ${c.warnings} warning(s)`
         ),
       ];
       return textResult(lines.join('\n'));
@@ -243,7 +243,7 @@ export function createMcpServer(): McpServer {
     {
       title: 'Context',
       description:
-        'Reúne o contexto do projeto (config, changes ativas e specs) num brief para o agente.',
+        'Gathers the project context (config, active changes, and specs) into a brief for the agent.',
       inputSchema: {},
     },
     async () => {
@@ -256,7 +256,7 @@ export function createMcpServer(): McpServer {
 }
 
 /**
- * Sobe o servidor MCP via stdio. Bloqueia enquanto o transporte estiver aberto.
+ * Starts the MCP server over stdio. Blocks while the transport is open.
  */
 export async function startMcpServer(): Promise<void> {
   const server = createMcpServer();

@@ -12,19 +12,19 @@ import {
 import { validateChange } from './validate.js';
 
 /**
- * `doctor`: checagem de integridade do projeto.
+ * `doctor`: project integrity check.
  *
- * Reescreve, enxuto, a ideia do `doctor` do projeto de referência (/base) —
- * lá acoplado a store/roots — para o modelo single-repo do agentic. Responde
- * "o projeto está consistente?": config válido, metadata das changes íntegro,
- * nada órfão e artefatos coerentes. Somente leitura; não repara nada.
+ * A lean rewrite of the `doctor` idea from the reference project (/base) —
+ * there coupled to store/roots — for agentic-fy's single-repo model. It answers
+ * "is the project consistent?": valid config, intact change metadata, nothing
+ * orphaned, and consistent artifacts. Read-only; it does not repair anything.
  */
 
 export type CheckLevel = 'ERROR' | 'WARNING' | 'INFO';
 
 export interface DoctorFinding {
   level: CheckLevel;
-  scope: string; // 'config' | 'changes' | '<nome-da-change>'
+  scope: string; // 'config' | 'changes' | '<change-name>'
   message: string;
 }
 
@@ -37,28 +37,28 @@ export async function runDoctor(root: string): Promise<DoctorReport> {
   const findings: DoctorFinding[] = [];
   const paths = resolveProjectPaths(root);
 
-  // 1. Config: existe e faz o parse pelo schema?
+  // 1. Config: does it exist and parse against the schema?
   if (!existsSync(paths.configFile)) {
     findings.push({
       level: 'ERROR',
       scope: 'config',
-      message: `agentic.config.yaml ausente em ${root}.`,
+      message: `agentic-fy.config.yaml missing in ${root}.`,
     });
   } else {
     try {
-      await readProjectConfig(root); // valida via ProjectConfigSchema
+      await readProjectConfig(root); // validates via ProjectConfigSchema
     } catch (error) {
       findings.push({
         level: 'ERROR',
         scope: 'config',
-        message: `agentic.config.yaml inválido: ${
+        message: `Invalid agentic-fy.config.yaml: ${
           error instanceof Error ? error.message : String(error)
         }`,
       });
     }
   }
 
-  // 2. Diretórios de change órfãos: pasta em changes/ sem metadata válido.
+  // 2. Orphaned change directories: a folder in changes/ without valid metadata.
   if (existsSync(paths.changesDir)) {
     const entries = await fs.readdir(paths.changesDir, { withFileTypes: true });
     for (const entry of entries) {
@@ -67,13 +67,13 @@ export async function runDoctor(root: string): Promise<DoctorReport> {
         findings.push({
           level: 'WARNING',
           scope: entry.name,
-          message: `Diretório em changes/ sem ${METADATA_FILE} — não é uma change válida.`,
+          message: `Directory in changes/ without ${METADATA_FILE} — not a valid change.`,
         });
       }
     }
   }
 
-  // 3. Cada change ativa: metadata legível + artefatos coerentes.
+  // 3. Each active change: readable metadata + consistent artifacts.
   let changes: Change[];
   try {
     changes = await listChanges(root);
@@ -81,7 +81,7 @@ export async function runDoctor(root: string): Promise<DoctorReport> {
     findings.push({
       level: 'ERROR',
       scope: 'changes',
-      message: `Falha ao ler as changes: ${
+      message: `Failed to read the changes: ${
         error instanceof Error ? error.message : String(error)
       }`,
     });
@@ -92,8 +92,8 @@ export async function runDoctor(root: string): Promise<DoctorReport> {
     try {
       const report = await validateChange(root, change.name);
       for (const issue of report.issues) {
-        // Só erros de estrutura entram no doctor; avisos de preenchimento são
-        // do `validate`. Isso mantém o doctor focado em integridade.
+        // Only structural errors go into doctor; content-fill warnings belong
+        // to `validate`. This keeps doctor focused on integrity.
         if (issue.level === 'ERROR') {
           findings.push({
             level: 'ERROR',
@@ -106,7 +106,7 @@ export async function runDoctor(root: string): Promise<DoctorReport> {
       findings.push({
         level: 'ERROR',
         scope: change.name,
-        message: `Change ilegível: ${error instanceof Error ? error.message : String(error)}`,
+        message: `Unreadable change: ${error instanceof Error ? error.message : String(error)}`,
       });
     }
   }

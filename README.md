@@ -1,123 +1,123 @@
-# agentic
+# agentic-fy
 
-CLI TypeScript performático e enxuto para workflow **spec-driven**, com suporte a **MCP**.
+A performant, lean TypeScript CLI for **spec-driven** workflows, with **MCP** support.
 
-O agentic estrutura o ciclo de desenvolvimento guiado por specs — do rascunho ao arquivamento — e expõe esse fluxo tanto no terminal quanto como servidor MCP, para que um agente de IA possa conduzir o trabalho na sua IDE.
+agentic-fy structures the spec-driven development cycle — from draft to archive — and exposes that flow both in the terminal and as an MCP server, so an AI agent can drive the work inside your IDE.
 
-## Por que agentic
+## Why agentic-fy
 
-- **Enxuto.** Poucas dependências, sem cerimônia. Fácil de entender e estender.
-- **MCP-first.** Integra com a IDE via Model Context Protocol, não via arquivos de skill por ferramenta.
-- **Spec-driven.** Cada mudança nasce de artefatos claros: proposta, design, tarefas e spec.
+- **Lean.** Few dependencies, no ceremony. Easy to understand and extend.
+- **MCP-first.** Integrates with the IDE via the Model Context Protocol, not via per-tool skill files.
+- **Spec-driven.** Every change starts from clear artifacts: proposal, design, tasks, and spec.
 
-## Requisitos
+## Requirements
 
 - Node.js `>= 20.19.0`
 
-## Instalação
+## Installation
 
 ```bash
-npm install -g @agentic-fy/agentic
+npm install -g agentic-fy
 ```
 
-Ou rode sem instalar:
+Or run without installing:
 
 ```bash
-npx @agentic-fy/agentic --version
+npx agentic-fy --version
 ```
 
-## Início rápido
+## Quick start
 
 ```bash
-cd seu-projeto
-agentic init                    # cria a estrutura e integra sua IDE (MCP)
-agentic explore                 # (opcional) pense antes de codar
-agentic propose "dark mode"     # rascunha proposal, design, tasks e spec
-agentic apply                   # acompanha as tarefas
-agentic verify                  # confere se está pronto
-agentic archive                 # arquiva a change concluída
+cd your-project
+agentic-fy init                    # creates the structure and integrates your IDE (MCP)
+agentic-fy explore                 # (optional) think before coding
+agentic-fy propose "dark mode"     # drafts proposal, design, tasks, and spec
+agentic-fy apply                   # tracks the tasks
+agentic-fy verify                  # checks whether it's ready
+agentic-fy archive                 # archives the completed change
 ```
 
-## O que o `init` cria
+## What `init` creates
 
 ```
-agentic.config.yaml     # configuração do projeto
-agentic/
-├── specs/              # specs do projeto
-├── changes/            # mudanças propostas (uma pasta por change)
-│   └── archive/        # changes concluídas
+agentic-fy.config.yaml     # project configuration
+agentic-fy/
+├── specs/              # project specs
+├── changes/            # proposed changes (one folder per change)
+│   └── archive/        # completed changes
 ```
 
-O `init` é idempotente e também configura a integração MCP da sua IDE. No terminal ele pergunta qual ferramenta configurar; para pular o prompt use `--tools`:
+`init` is idempotent and also configures the MCP integration for your IDE. In the terminal it asks which tool to configure; to skip the prompt use `--tools`:
 
 ```bash
-agentic init --tools kiro,cursor   # configura as ferramentas escolhidas
-agentic init --tools none          # só a estrutura base
+agentic-fy init --tools kiro,cursor   # configures the chosen tools
+agentic-fy init --tools none          # only the base structure
 ```
 
-O merge do `mcp.json` é não-destrutivo: se você já tem um, o agentic só adiciona o próprio servidor sem apagar o resto.
+The `mcp.json` merge is non-destructive: if you already have one, agentic-fy only adds its own server without deleting the rest.
 
-## Comandos
+## Commands
 
-| Comando | O que faz |
+| Command | What it does |
 |---|---|
-| `init [path] [--tools <lista>]` | Cria a estrutura base e integra as ferramentas de IA (MCP) |
-| `explore` | Modo pensamento: mapeia o problema e lista as changes ativas |
-| `propose <nome>` | Cria a change e rascunha `proposal`, `design`, `tasks`, `specs/` |
-| `apply [nome]` | Lê o `tasks.md` e reporta o progresso das tarefas |
-| `verify [nome]` | Confere artefatos e tarefas; marca como `verified` |
-| `archive [nome]` | Arquiva a change concluída |
-| `list [--specs] [--long] [--json]` | Lista changes (ou specs) |
-| `show <nome> [--artifact\|--spec] [--json]` | Mostra uma change, um artefato ou uma spec |
-| `validate [nome] [--all] [--strict] [--json]` | Valida os artefatos de uma change |
-| `status [--json]` | Panorama das changes por estágio, progresso e problemas |
-| `config show \| set <chave> <valor>` | Lê e edita o `agentic.config.yaml` |
-| `doctor [--json]` | Verifica a integridade do projeto |
-| `context [--json]` | Reúne config, changes e specs num brief para o agente |
-| `view [--static] [--json]` | Dashboard de specs e changes (interativo no terminal) |
-| `completion [shell]` | Imprime um script de autocompletar (powershell/bash/zsh) |
-| `mcp` | Inicia o servidor MCP (stdio) |
+| `init [path] [--tools <list>]` | Creates the base structure and integrates the AI tools (MCP) |
+| `explore` | Thinking mode: maps the problem and lists active changes |
+| `propose <name>` | Creates the change and drafts `proposal`, `design`, `tasks`, `specs/` |
+| `apply [name]` | Reads `tasks.md` and reports task progress |
+| `verify [name]` | Checks artifacts and tasks; marks as `verified` |
+| `archive [name]` | Archives the completed change |
+| `list [--specs] [--long] [--json]` | Lists changes (or specs) |
+| `show <name> [--artifact\|--spec] [--json]` | Shows a change, an artifact, or a spec |
+| `validate [name] [--all] [--strict] [--json]` | Validates the artifacts of a change |
+| `status [--json]` | Overview of changes by stage, progress, and issues |
+| `config show \| set <key> <value>` | Reads and edits `agentic-fy.config.yaml` |
+| `doctor [--json]` | Checks project integrity |
+| `context [--json]` | Gathers config, changes, and specs into a brief for the agent |
+| `view [--static] [--json]` | Specs and changes dashboard (interactive in the terminal) |
+| `completion [shell]` | Prints an autocompletion script (powershell/bash/zsh) |
+| `mcp` | Starts the MCP server (stdio) |
 
-Referência completa em [`docs/commands.md`](docs/commands.md).
+Full reference in [`docs/commands.md`](docs/commands.md).
 
-## Os artefatos de uma change
+## The artifacts of a change
 
-Ao rodar `propose`, a change ganha:
+When you run `propose`, the change gets:
 
-| Artefato | Propósito |
-|----------|-----------|
-| `proposal.md` | O "por quê" e o "o quê" — intenção, escopo e abordagem |
-| `specs/spec.md` | Requisitos e critérios de aceite |
-| `design.md` | O "como" — abordagem técnica e decisões |
-| `tasks.md` | Checklist de implementação |
+| Artifact | Purpose |
+|----------|---------|
+| `proposal.md` | The "why" and the "what" — intent, scope, and approach |
+| `specs/spec.md` | Requirements and acceptance criteria |
+| `design.md` | The "how" — technical approach and decisions |
+| `tasks.md` | Implementation checklist |
 
-## Deixando a IA conduzir (MCP)
+## Letting the AI drive (MCP)
 
-Se você escolheu uma ferramenta no `init`, o `mcp.json` da sua IDE já foi configurado — basta recarregar a IDE. Para subir o servidor manualmente:
+If you chose a tool during `init`, your IDE's `mcp.json` has already been configured — just reload the IDE. To start the server manually:
 
 ```bash
-agentic mcp
+agentic-fy mcp
 ```
 
-Ele expõe as tools `explore`, `propose`, `apply`, `verify`, `archive`, `list`, `show`, `validate`, `status` e `context` para qualquer agente compatível com MCP. Detalhes de configuração por editor em [`docs/commands.md`](docs/commands.md#mcp).
+It exposes the `explore`, `propose`, `apply`, `verify`, `archive`, `list`, `show`, `validate`, `status`, and `context` tools to any MCP-compatible agent. Per-editor configuration details in [`docs/commands.md`](docs/commands.md#mcp).
 
-## Desenvolvimento
+## Development
 
 ```bash
 npm install
-npm run build       # compila TypeScript para dist/
-npm run dev         # tsc em watch
-npm test            # roda a suíte (vitest)
-node bin/agentic.js --version
+npm run build       # compiles TypeScript to dist/
+npm run dev         # tsc in watch mode
+npm test            # runs the suite (vitest)
+node bin/agentic-fy.js --version
 ```
 
-## Documentação
+## Documentation
 
-- [Primeiros passos](docs/getting-started.md)
-- [Conceitos essenciais](docs/overview.md)
-- [Comandos](docs/commands.md)
+- [Getting started](docs/getting-started.md)
+- [Core concepts](docs/overview.md)
+- [Commands](docs/commands.md)
 - [Changelog](CHANGELOG.md)
 
-## Licença
+## License
 
 MIT

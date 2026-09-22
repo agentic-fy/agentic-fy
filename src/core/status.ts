@@ -2,16 +2,16 @@ import { listChangeSummaries, ChangeSummary } from './inspect.js';
 import { validateChange } from './validate.js';
 
 /**
- * `status`: panorama do projeto.
+ * `status`: project overview.
  *
- * Reescreve, enxuto, a ideia do `workflow/status` do projeto de referência
- * (/base): um "dashboard" das changes ativas — em que estágio estão, quanto
- * falta de tarefas e se há problemas de validação. Reaproveita o core de
- * inspeção e validação já existente. Função pura (não imprime).
+ * A lean rewrite of the `workflow/status` idea from the reference project
+ * (/base): a "dashboard" of the active changes — what stage they're in, how
+ * many tasks remain, and whether there are validation issues. Reuses the
+ * existing inspection and validation core. Pure function (does not print).
  */
 
 export interface ChangeStatusEntry extends ChangeSummary {
-  /** Problemas encontrados pela validação (contagem por nível). */
+  /** Issues found by the validation (count by level). */
   errors: number;
   warnings: number;
 }
@@ -22,7 +22,7 @@ export interface ProjectStatus {
   changes: ChangeStatusEntry[];
 }
 
-/** Monta o status do projeto: resumo por change + agregados. */
+/** Builds the project status: per-change summary + aggregates. */
 export async function projectStatus(root: string): Promise<ProjectStatus> {
   const summaries = await listChangeSummaries(root);
 

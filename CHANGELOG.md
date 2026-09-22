@@ -1,68 +1,68 @@
 # Changelog
 
-Todas as mudanças relevantes deste projeto são documentadas aqui.
+All notable changes to this project are documented here.
 
-O formato segue, de forma leve, o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
-e o projeto adota versionamento semântico ([SemVer](https://semver.org/lang/pt-BR/)).
+The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and the project adheres to semantic versioning ([SemVer](https://semver.org/)).
 
 ## [0.1.2] - 2026-09-21
 
-Consolidação do CLI: além do loop de workflow, o agentic passou a inspecionar,
-validar e visualizar o projeto, e a integrar as ferramentas de IA via MCP no
-`init`. Tudo reescrito de forma enxuta, sem dependências novas.
+CLI consolidation: beyond the workflow loop, agentic-fy now inspects,
+validates, and visualizes the project, and integrates AI tools via MCP during
+`init`. Everything rewritten in a lean way, with no new dependencies.
 
-### Adicionado
+### Added
 
-- **Inspeção**
-  - `list` — lista as changes ativas (`--specs`, `--long`, `--json`).
-  - `show <nome>` — mostra uma change, um artefato (`--artifact`) ou uma spec
-    (`--spec`); sugere nomes próximos quando o nome não bate ("você quis dizer?").
-  - `status` — panorama das changes por estágio, com progresso e problemas.
-  - `context` — reúne config, changes e specs num brief para o agente.
-  - `view` — dashboard de specs e changes, interativo no terminal (navegação por
-    número via readline nativo) e com modo `--static`/`--json`.
-- **Validação e integridade**
-  - `validate [nome]` — valida os artefatos de uma change (`--all`, `--strict`,
-    `--json`): detecta artefato ausente, template intocado, corpo vazio e
-    `tasks.md` sem checkbox real.
-  - `doctor` — checagem de integridade do projeto (config, metadata das changes,
-    diretórios órfãos, artefatos coerentes).
-- **Configuração**
-  - `config show` / `config set` — lê e edita o `agentic.config.yaml`, validando
-    pelo schema antes de gravar.
-- **Integração de ferramentas de IA no `init`**
-  - Seleção de ferramenta interativa (com pré-seleção das detectadas) e flag
-    `--tools all|none|<lista>` para modo não-interativo.
-  - Geração/merge **não-destrutivo e idempotente** do `mcp.json` de cada
-    ferramenta (Kiro, Cursor, GitHub Copilot, Claude Code, Windsurf), apontando
-    para `agentic mcp`.
-- **Autocompletar**
-  - `completion [shell]` — imprime um script de autocompletar para PowerShell,
-    Bash ou Zsh, sem instalar nada automaticamente.
+- **Inspection**
+  - `list` — lists active changes (`--specs`, `--long`, `--json`).
+  - `show <name>` — shows a change, an artifact (`--artifact`), or a spec
+    (`--spec`); suggests close names when the name doesn't match ("did you mean?").
+  - `status` — overview of changes by stage, with progress and issues.
+  - `context` — gathers config, changes, and specs into a brief for the agent.
+  - `view` — specs and changes dashboard, interactive in the terminal (navigation
+    by number via native readline) and with a `--static`/`--json` mode.
+- **Validation and integrity**
+  - `validate [name]` — validates the artifacts of a change (`--all`, `--strict`,
+    `--json`): detects missing artifacts, untouched templates, empty bodies, and
+    `tasks.md` without a real checkbox.
+  - `doctor` — project integrity check (config, change metadata,
+    orphaned directories, consistent artifacts).
+- **Configuration**
+  - `config show` / `config set` — reads and edits `agentic-fy.config.yaml`, validating
+    against the schema before writing.
+- **AI tool integration in `init`**
+  - Interactive tool selection (with detected tools pre-selected) and the
+    `--tools all|none|<list>` flag for non-interactive mode.
+  - **Non-destructive and idempotent** generation/merge of each tool's `mcp.json`
+    (Kiro, Cursor, GitHub Copilot, Claude Code, Windsurf), pointing to
+    `agentic-fy mcp`.
+- **Autocompletion**
+  - `completion [shell]` — prints an autocompletion script for PowerShell,
+    Bash, or Zsh, without installing anything automatically.
 - **MCP**
-  - Novas tools expostas pelo servidor MCP: `list`, `show`, `validate`,
-    `status` e `context` (além das de workflow).
+  - New tools exposed by the MCP server: `list`, `show`, `validate`,
+    `status`, and `context` (in addition to the workflow ones).
 
-### Alterado
+### Changed
 
-- `init` deixou de criar apenas a estrutura base: agora também configura a
-  integração MCP das ferramentas escolhidas (mantendo a idempotência).
-- Documentação (`docs/commands.md` e `docs/getting-started.md`) atualizada para
-  cobrir todos os comandos e a integração via MCP.
+- `init` no longer only creates the base structure: it now also configures the
+  MCP integration for the chosen tools (keeping idempotency).
+- Documentation (`docs/commands.md` and `docs/getting-started.md`) updated to
+  cover all commands and the MCP integration.
 
-### Mantido enxuto (fora de escopo por design)
+### Kept lean (out of scope by design)
 
-Recursos do projeto de referência que **não** foram trazidos, para preservar a
-proposta minimalista: planejamento multi-repositório (stores/worksets),
-profiles, migração/legado, telemetria, geração de skills por ferramenta e o
-modelo de deltas estruturados de specs.
+Features from the reference project that were **not** brought in, to preserve the
+minimalist proposal: multi-repository planning (stores/worksets),
+profiles, migration/legacy, telemetry, per-tool skill generation, and the
+structured spec deltas model.
 
 ## [0.1.1] - 2026-09
 
-- Núcleo do workflow spec-driven: `init`, `explore`, `propose`, `apply`,
+- Core of the spec-driven workflow: `init`, `explore`, `propose`, `apply`,
   `verify`, `archive`.
-- Servidor MCP (`mcp`) expondo as tools de workflow via stdio.
-- Estrutura base do projeto (`agentic.config.yaml` + `agentic/`).
+- MCP server (`mcp`) exposing the workflow tools via stdio.
+- Base project structure (`agentic-fy.config.yaml` + `agentic-fy/`).
 
 [0.1.2]: #012---2026-09-21
 [0.1.1]: #011---2026-09

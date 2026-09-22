@@ -7,9 +7,9 @@ import { selectTools } from '../core/tool-selection.js';
 import { ALL_TOOL_IDS } from '../core/tools.js';
 
 /**
- * Registra o comando `init`, que cria a estrutura base do projeto
- * (diretórios + agentic.config.yaml) e, opcionalmente, configura a integração
- * MCP das ferramentas de IA escolhidas.
+ * Registers the `init` command, which creates the base project structure
+ * (directories + agentic-fy.config.yaml) and, optionally, configures the MCP
+ * integration for the selected AI tools.
  */
 export function registerInitCommand(
   program: Command,
@@ -17,58 +17,58 @@ export function registerInitCommand(
 ): void {
   program
     .command('init [path]')
-    .description('Cria a estrutura base do projeto agentic e integra as ferramentas de IA')
+    .description('Creates the base agentic-fy project structure and integrates the AI tools')
     .option(
-      '--tools <lista>',
-      `Ferramentas a configurar sem prompt: all | none | ${ALL_TOOL_IDS.join(',')}`
+      '--tools <list>',
+      `Tools to configure without a prompt: all | none | ${ALL_TOOL_IDS.join(',')}`
     )
     .action(async (targetPath = '.', options: { tools?: string }) => {
       try {
-        // 1. Seleciona as ferramentas (flag > prompt interativo > nenhuma).
+        // 1. Select the tools (flag > interactive prompt > none).
         const tools = await selectTools(path.resolve(targetPath), { toolsFlag: options.tools });
 
-        // 2. Cria a estrutura e configura as ferramentas escolhidas.
+        // 2. Create the structure and configure the selected tools.
         const result = await initProject(targetPath, tools);
         const rel = (p: string) => path.relative(result.root, p) || '.';
 
-        console.log(chalk.bold('Projeto agentic inicializado'));
-        console.log(`Raiz: ${result.root}`);
+        console.log(chalk.bold('agentic-fy project initialized'));
+        console.log(`Root: ${result.root}`);
         if (result.createdDirs.length > 0) {
-          console.log('Diretórios criados:');
+          console.log('Created directories:');
           for (const dir of result.createdDirs) {
             console.log(`  ${rel(dir)}`);
           }
         } else {
-          console.log(chalk.dim('Estrutura já existia (nada novo a criar).'));
+          console.log(chalk.dim('Structure already existed (nothing new to create).'));
         }
         console.log(
           result.configStatus === 'created'
-            ? 'Config: agentic.config.yaml (criado)'
-            : chalk.dim('Config: agentic.config.yaml (já existia)')
+            ? 'Config: agentic-fy.config.yaml (created)'
+            : chalk.dim('Config: agentic-fy.config.yaml (already existed)')
         );
 
-        // 3. Reporta a integração de cada ferramenta.
+        // 3. Report the integration of each tool.
         if (result.tools.length > 0) {
-          console.log('Ferramentas (MCP):');
+          console.log('Tools (MCP):');
           for (const t of result.tools) {
             const label =
               t.outcome === 'created'
-                ? chalk.green('configurada')
+                ? chalk.green('configured')
                 : t.outcome === 'updated'
-                  ? chalk.green('atualizada')
-                  : chalk.dim('sem alteração');
+                  ? chalk.green('updated')
+                  : chalk.dim('unchanged');
             console.log(`  ${t.tool.name}: ${label} — ${rel(t.file)}`);
           }
         } else {
           console.log(
             chalk.dim(
-              'Nenhuma ferramenta configurada. Use "agentic init --tools kiro,cursor" para integrar.'
+              'No tools configured. Use "agentic-fy init --tools kiro,cursor" to integrate.'
             )
           );
         }
 
         console.log();
-        console.log(chalk.dim('Próximo passo: agentic propose "sua ideia"'));
+        console.log(chalk.dim('Next step: agentic-fy propose "your idea"'));
       } catch (error) {
         failWithError(error);
         process.exit(1);

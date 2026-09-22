@@ -1,17 +1,17 @@
 import type { Command } from 'commander';
 
 /**
- * Comando `completion`: gera um script de autocompletar para o shell.
+ * `completion` command: generates a shell autocompletion script.
  *
- * Reescrita enxuta do `completion` do projeto de referência (/base): sem
- * `ora`, sem `@inquirer`, sem instalar nada automaticamente. Apenas imprime o
- * script no stdout para o usuário instalar como preferir. Suporta PowerShell,
- * Bash e Zsh, cobrindo o essencial: completar os subcomandos do agentic.
+ * A lean rewrite of the `completion` command from the reference project
+ * (/base): no `ora`, no `@inquirer`, no automatic installation. It just prints
+ * the script to stdout for the user to install however they prefer. Supports
+ * PowerShell, Bash, and Zsh, covering the essentials: completing agentic-fy's subcommands.
  */
 
 type Shell = 'powershell' | 'bash' | 'zsh';
 
-/** Lista os subcomandos de topo registrados no programa (para completar). */
+/** Lists the top-level subcommands registered in the program (for completion). */
 function topLevelCommands(program: Command): string[] {
   return program.commands
     .map((c) => c.name())
@@ -19,7 +19,7 @@ function topLevelCommands(program: Command): string[] {
     .sort();
 }
 
-/** Detecta o shell a partir do ambiente; cai em powershell no Windows. */
+/** Detects the shell from the environment; falls back to powershell on Windows. */
 function detectShell(): Shell | undefined {
   const env = process.env;
   if (env.PSModulePath && process.platform === 'win32') return 'powershell';
@@ -32,9 +32,9 @@ function detectShell(): Shell | undefined {
 
 function powershellScript(commands: string[]): string {
   const list = commands.map((c) => `'${c}'`).join(', ');
-  return `# Autocompletar do agentic (PowerShell)
-# Instale adicionando ao seu $PROFILE:
-Register-ArgumentCompleter -Native -CommandName agentic -ScriptBlock {
+  return `# agentic-fy autocompletion (PowerShell)
+# Install by adding to your $PROFILE:
+Register-ArgumentCompleter -Native -CommandName agentic-fy -ScriptBlock {
   param($wordToComplete, $commandAst, $cursorPosition)
   $commands = @(${list})
   $commands | Where-Object { $_ -like "$wordToComplete*" } | ForEach-Object {
@@ -45,26 +45,26 @@ Register-ArgumentCompleter -Native -CommandName agentic -ScriptBlock {
 }
 
 function bashScript(commands: string[]): string {
-  return `# Autocompletar do agentic (Bash)
-# Instale com: agentic completion bash >> ~/.bashrc  (e recarregue o shell)
-_agentic_completions() {
+  return `# agentic-fy autocompletion (Bash)
+# Install with: agentic-fy completion bash >> ~/.bashrc  (then reload the shell)
+_agenticfy_completions() {
   local cur="\${COMP_WORDS[COMP_CWORD]}"
   local commands="${commands.join(' ')}"
   COMPREPLY=( $(compgen -W "\${commands}" -- "\${cur}") )
 }
-complete -F _agentic_completions agentic
+complete -F _agenticfy_completions agentic-fy
 `;
 }
 
 function zshScript(commands: string[]): string {
-  return `# Autocompletar do agentic (Zsh)
-# Instale com: agentic completion zsh >> ~/.zshrc  (e recarregue o shell)
-_agentic() {
+  return `# agentic-fy autocompletion (Zsh)
+# Install with: agentic-fy completion zsh >> ~/.zshrc  (then reload the shell)
+_agenticfy() {
   local -a commands
   commands=(${commands.join(' ')})
   compadd -- \${commands}
 }
-compdef _agentic agentic
+compdef _agenticfy agentic-fy
 `;
 }
 
@@ -74,14 +74,14 @@ export function registerCompletionCommand(
 ): void {
   program
     .command('completion [shell]')
-    .description('Imprime um script de autocompletar (powershell | bash | zsh)')
+    .description('Prints an autocompletion script (powershell | bash | zsh)')
     .action((shellArg?: string) => {
       try {
         const shell = (shellArg?.toLowerCase() as Shell | undefined) ?? detectShell();
         if (!shell || !['powershell', 'bash', 'zsh'].includes(shell)) {
           throw new Error(
-            `Não foi possível determinar o shell. Informe explicitamente: ` +
-              `"agentic completion powershell|bash|zsh".`
+            `Could not determine the shell. Specify it explicitly: ` +
+              `"agentic-fy completion powershell|bash|zsh".`
           );
         }
         const commands = topLevelCommands(program);

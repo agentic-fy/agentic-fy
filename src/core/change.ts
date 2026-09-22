@@ -11,14 +11,14 @@ import {
   DEFAULT_PROJECT_CONFIG,
 } from './schema.js';
 
-export const AGENTIC_DIR = 'agentic';
+export const AGENTIC_DIR = 'agentic-fy';
 export const CHANGES_DIR = 'changes';
 export const ARCHIVE_DIR = 'archive';
 export const SPECS_DIR = 'specs';
-export const CONFIG_FILE = 'agentic.config.yaml';
-export const METADATA_FILE = '.agentic.yaml';
+export const CONFIG_FILE = 'agentic-fy.config.yaml';
+export const METADATA_FILE = '.agentic-fy.yaml';
 
-/** Caminhos derivados a partir da raiz do projeto. */
+/** Paths derived from the project root. */
 export interface ProjectPaths {
   root: string;
   configFile: string;
@@ -41,12 +41,12 @@ export function resolveProjectPaths(root: string): ProjectPaths {
 }
 
 /**
- * Sobe na árvore de diretórios procurando um projeto agentic inicializado
- * (presença de `agentic.config.yaml`). Retorna a raiz ou null.
+ * Walks up the directory tree looking for an initialized agentic-fy project
+ * (presence of `agentic-fy.config.yaml`). Returns the root or null.
  */
 export function findProjectRoot(startDir: string = process.cwd()): string | null {
   let current = path.resolve(startDir);
-  // Loop até a raiz do filesystem.
+  // Loop up to the filesystem root.
   for (;;) {
     if (existsSync(path.join(current, CONFIG_FILE))) {
       return current;
@@ -59,13 +59,13 @@ export function findProjectRoot(startDir: string = process.cwd()): string | null
   }
 }
 
-/** Resolve a raiz do projeto ou lança um erro acionável. */
+/** Resolves the project root or throws an actionable error. */
 export function requireProjectRoot(startDir: string = process.cwd()): string {
   const root = findProjectRoot(startDir);
   if (!root) {
     throw new Error(
-      `Projeto agentic não encontrado (nenhum ${CONFIG_FILE} nos diretórios acima). ` +
-        `Rode "agentic init" primeiro.`
+      `agentic-fy project not found (no ${CONFIG_FILE} in the directories above). ` +
+        `Run "agentic-fy init" first.`
     );
   }
   return root;
@@ -95,7 +95,7 @@ export interface Change {
   metadata: ChangeMetadata;
 }
 
-/** Normaliza um nome de change para um slug seguro em disco. */
+/** Normalizes a change name into a disk-safe slug. */
 export function normalizeChangeName(name: string): string {
   const slug = name
     .trim()
@@ -103,7 +103,7 @@ export function normalizeChangeName(name: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
   if (!slug) {
-    throw new Error(`Nome de change inválido: "${name}"`);
+    throw new Error(`Invalid change name: "${name}"`);
   }
   return slug;
 }
@@ -117,8 +117,8 @@ export function changeExists(root: string, name: string): boolean {
 }
 
 /**
- * Cria uma nova change com estrutura base (specs/ e metadata).
- * Idempotente: se já existir, apenas retorna a change atual.
+ * Creates a new change with the base structure (specs/ and metadata).
+ * Idempotent: if it already exists, it just returns the current change.
  */
 export async function createChange(
   root: string,
@@ -151,7 +151,7 @@ export async function readChange(root: string, rawName: string): Promise<Change>
   const dir = changeDir(root, name);
   const metaFile = path.join(dir, METADATA_FILE);
   if (!existsSync(metaFile)) {
-    throw new Error(`Change "${name}" não encontrada em ${dir}`);
+    throw new Error(`Change "${name}" not found in ${dir}`);
   }
   const raw = await fs.readFile(metaFile, 'utf8');
   const metadata = ChangeMetadataSchema.parse(YAML.parse(raw) ?? {});
@@ -165,7 +165,7 @@ export async function writeChangeMetadata(root: string, metadata: ChangeMetadata
   await fs.writeFile(path.join(dir, METADATA_FILE), YAML.stringify(validated), 'utf8');
 }
 
-/** Atualiza o status de uma change e o carimbo updatedAt. */
+/** Updates a change's status and the updatedAt timestamp. */
 export async function setChangeStatus(
   root: string,
   rawName: string,
@@ -181,7 +181,7 @@ export async function setChangeStatus(
   return { ...change, metadata };
 }
 
-/** Lista todas as changes ativas (fora do archive). */
+/** Lists all active changes (outside the archive). */
 export async function listChanges(root: string): Promise<Change[]> {
   const { changesDir } = resolveProjectPaths(root);
   if (!existsSync(changesDir)) {
@@ -200,18 +200,18 @@ export async function listChanges(root: string): Promise<Change[]> {
   return changes;
 }
 
-/** Move uma change concluída para `agentic/changes/archive/<nome>/`. */
+/** Moves a completed change to `agentic-fy/changes/archive/<name>/`. */
 export async function archiveChange(root: string, rawName: string): Promise<string> {
   const name = normalizeChangeName(rawName);
   const from = changeDir(root, name);
   if (!existsSync(from)) {
-    throw new Error(`Change "${name}" não encontrada para arquivar`);
+    throw new Error(`Change "${name}" not found to archive`);
   }
   const { archiveDir } = resolveProjectPaths(root);
   await fs.mkdir(archiveDir, { recursive: true });
   const to = path.join(archiveDir, name);
   if (existsSync(to)) {
-    throw new Error(`Já existe uma change arquivada com o nome "${name}"`);
+    throw new Error(`An archived change with the name "${name}" already exists`);
   }
   await setChangeStatus(root, name, 'archived');
   await fs.rename(from, to);

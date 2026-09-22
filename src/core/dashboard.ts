@@ -3,30 +3,30 @@ import chalk from 'chalk';
 import { listChangeSummaries, listSpecIds, ChangeSummary } from './inspect.js';
 
 /**
- * Dados e renderização do dashboard (`view`).
+ * Dashboard data and rendering (`view`).
  *
- * Espelha o `view` do projeto de referência (/base) — um painel de specs e
- * changes com barras de progresso, agrupado por estágio — reescrito enxuto e
- * sem dependências além do chalk que o projeto já usa. Funções puras: montam
- * os dados e devolvem uma string; quem imprime é a camada de comando.
+ * Mirrors the `view` command from the reference project (/base) — a panel of
+ * specs and changes with progress bars, grouped by stage — rewritten lean and
+ * with no dependencies beyond the chalk the project already uses. Pure
+ * functions: they build the data and return a string; the command layer prints it.
  */
 
 export interface DashboardData {
-  /** Changes ainda em rascunho (exploring/proposed). */
+  /** Changes still in draft (exploring/proposed). */
   draft: ChangeSummary[];
-  /** Changes em andamento (applying). */
+  /** Changes in progress (applying). */
   active: ChangeSummary[];
-  /** Changes prontas (verified). */
+  /** Ready changes (verified). */
   done: ChangeSummary[];
   specs: string[];
   totals: { changes: number; specs: number; tasksTotal: number; tasksDone: number };
 }
 
-/** Classifica o status de uma change em um dos três grupos do painel. */
+/** Classifies a change's status into one of the panel's three groups. */
 function bucketOf(status: string): 'draft' | 'active' | 'done' {
   if (status === 'applying') return 'active';
   if (status === 'verified') return 'done';
-  return 'draft'; // exploring, proposed (e qualquer outro) contam como rascunho
+  return 'draft'; // exploring, proposed (and any other) count as draft
 }
 
 export async function buildDashboard(root: string): Promise<DashboardData> {
@@ -57,7 +57,7 @@ export async function buildDashboard(root: string): Promise<DashboardData> {
   };
 }
 
-/** Barra de progresso em blocos (largura fixa), estilo do /base. */
+/** Block progress bar (fixed width), /base style. */
 export function progressBar(completed: number, total: number, width = 20): string {
   if (total === 0) return chalk.dim('─'.repeat(width));
   const filled = Math.round((completed / total) * width);
@@ -69,26 +69,26 @@ function pct(completed: number, total: number): string {
   return `${p}%`;
 }
 
-/** Renderiza o dashboard estático como string. */
+/** Renders the static dashboard as a string. */
 export function renderDashboard(data: DashboardData): string {
   const lines: string[] = [];
   const rule = '═'.repeat(60);
   const sub = '─'.repeat(60);
 
   lines.push('');
-  lines.push(chalk.bold('Agentic Dashboard'));
+  lines.push(chalk.bold('agentic-fy Dashboard'));
   lines.push(rule);
 
-  // Resumo.
+  // Summary.
   const { totals } = data;
   lines.push(
     `Changes: ${totals.changes}  ·  Specs: ${totals.specs}  ·  ` +
-      `Tarefas: ${totals.tasksDone}/${totals.tasksTotal} (${pct(totals.tasksDone, totals.tasksTotal)})`
+      `Tasks: ${totals.tasksDone}/${totals.tasksTotal} (${pct(totals.tasksDone, totals.tasksTotal)})`
   );
 
   if (data.draft.length > 0) {
     lines.push('');
-    lines.push(chalk.bold.gray('Rascunhos'));
+    lines.push(chalk.bold.gray('Drafts'));
     lines.push(sub);
     for (const c of data.draft) {
       lines.push(`  ${chalk.gray('○')} ${c.name} ${chalk.dim(`— ${c.title}`)}`);
@@ -97,7 +97,7 @@ export function renderDashboard(data: DashboardData): string {
 
   if (data.active.length > 0) {
     lines.push('');
-    lines.push(chalk.bold.cyan('Em andamento'));
+    lines.push(chalk.bold.cyan('In progress'));
     lines.push(sub);
     for (const c of data.active) {
       const bar = progressBar(c.tasks.completed, c.tasks.total);
@@ -109,7 +109,7 @@ export function renderDashboard(data: DashboardData): string {
 
   if (data.done.length > 0) {
     lines.push('');
-    lines.push(chalk.bold.green('Prontas (verified)'));
+    lines.push(chalk.bold.green('Ready (verified)'));
     lines.push(sub);
     for (const c of data.done) {
       lines.push(`  ${chalk.green('✓')} ${c.name} ${chalk.dim(`— ${c.title}`)}`);
@@ -125,7 +125,7 @@ export function renderDashboard(data: DashboardData): string {
 
   if (data.totals.changes === 0 && data.specs.length === 0) {
     lines.push('');
-    lines.push(chalk.dim('Projeto vazio. Rode "agentic propose <nome>" para começar.'));
+    lines.push(chalk.dim('Empty project. Run "agentic-fy propose <name>" to get started.'));
   }
 
   lines.push('');

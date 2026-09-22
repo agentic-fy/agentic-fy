@@ -1,35 +1,35 @@
 # Comandos
 
-Referência de cada comando do CLI `agentic`. Todos rodam no seu terminal.
+Referência de cada comando do CLI `agentic-fy`. Todos rodam no seu terminal.
 
 Flags globais:
 - `-v, --version` — mostra o logo, a versão e a lista de comandos.
 - `--help` — ajuda do comando.
 - `--no-color` — desabilita a saída colorida.
 
-A maioria dos comandos (exceto `init` e `mcp`) precisa de um projeto já inicializado — ou seja, um `agentic.config.yaml` no diretório atual ou em um diretório acima.
+A maioria dos comandos (exceto `init` e `mcp`) precisa de um projeto já inicializado — ou seja, um `agentic-fy.config.yaml` no diretório atual ou em um diretório acima.
 
 ## init
 
 ```bash
-agentic init [path] [--tools <lista>]
+agentic-fy init [path] [--tools <lista>]
 ```
 
 Cria a estrutura base do projeto em `path` (padrão: diretório atual):
 
 ```
-agentic.config.yaml
-agentic/
+agentic-fy.config.yaml
+agentic-fy/
 ├── specs/              (com .gitkeep)
 ├── changes/
 │   └── archive/        (com .gitkeep)
 ```
 
-Idempotente: rodar de novo garante que os diretórios existem e **não** sobrescreve o `agentic.config.yaml`.
+Idempotente: rodar de novo garante que os diretórios existem e **não** sobrescreve o `agentic-fy.config.yaml`.
 
 ### Integração com ferramentas de IA
 
-Além da estrutura, o `init` configura a integração MCP das ferramentas de IA que você usa, escrevendo (ou mesclando) o `mcp.json` de cada uma apontando para `agentic mcp`. Assim o agente da sua IDE já enxerga as ferramentas do agentic.
+Além da estrutura, o `init` configura a integração MCP das ferramentas de IA que você usa, escrevendo (ou mesclando) o `mcp.json` de cada uma apontando para `agentic-fy mcp`. Assim o agente da sua IDE já enxerga as ferramentas do agentic-fy.
 
 Como as ferramentas são escolhidas:
 
@@ -47,23 +47,23 @@ O merge é **não-destrutivo e idempotente**: outros servidores MCP e chaves já
 Exemplos:
 
 ```bash
-agentic init --tools kiro,cursor    # configura Kiro e Cursor
-agentic init --tools none           # só a estrutura base
-agentic init                        # pergunta (ou nada, se sem TTY)
+agentic-fy init --tools kiro,cursor    # configura Kiro e Cursor
+agentic-fy init --tools none           # só a estrutura base
+agentic-fy init                        # pergunta (ou nada, se sem TTY)
 ```
 
 ## explore
 
 ```bash
-agentic explore
+agentic-fy explore
 ```
 
-Modo pensamento. Confirma que existe um projeto agentic e lista as changes ativas com seus status. Não cria nem altera nada — é um ponto de partida para mapear o problema antes de propor.
+Modo pensamento. Confirma que existe um projeto agentic-fy e lista as changes ativas com seus status. Não cria nem altera nada — é um ponto de partida para mapear o problema antes de propor.
 
 ## propose
 
 ```bash
-agentic propose <nome>
+agentic-fy propose <nome>
 ```
 
 Cria uma change e rascunha os artefatos a partir de templates:
@@ -75,7 +75,7 @@ O `<nome>` é normalizado para um slug (ex.: `"add login"` vira `add-login`). N�
 ## apply
 
 ```bash
-agentic apply [nome]
+agentic-fy apply [nome]
 ```
 
 Lê o `tasks.md` da change, faz o parse das checkboxes e reporta quantas tarefas estão concluídas e pendentes, listando as pendentes. Marca o status como `applying`.
@@ -85,7 +85,7 @@ Se `nome` for omitido e houver exatamente uma change ativa, ela é usada; se hou
 ## verify
 
 ```bash
-agentic verify [nome]
+agentic-fy verify [nome]
 ```
 
 Confere se os três artefatos (`proposal`, `design`, `tasks`) existem e se todas as tarefas do `tasks.md` estão marcadas. Só marca a change como `verified` quando tudo está presente e sem tarefas pendentes; caso contrário, aponta o que falta.
@@ -93,33 +93,33 @@ Confere se os três artefatos (`proposal`, `design`, `tasks`) existem e se todas
 ## archive
 
 ```bash
-agentic archive [nome]
+agentic-fy archive [nome]
 ```
 
-Move a change para `agentic/changes/archive/<nome>/` e marca o status como `archived`.
+Move a change para `agentic-fy/changes/archive/<nome>/` e marca o status como `archived`.
 
 ## list
 
 ```bash
-agentic list [--specs] [--long] [--json]
+agentic-fy list [--specs] [--long] [--json]
 ```
 
 Lista as changes ativas (fora do archive). Por padrão imprime só os nomes.
 
 - `--long` — mostra também o status, o título (extraído do `proposal.md`) e o progresso de tarefas, ex.: `add-login (proposed): Login com OAuth [tarefas 1/3]`.
-- `--specs` — lista as specs do projeto (`agentic/specs/*.md`) em vez das changes.
+- `--specs` — lista as specs do projeto (`agentic-fy/specs/*.md`) em vez das changes.
 - `--json` — saída estruturada, útil para scripts e agentes.
 
 ## show
 
 ```bash
-agentic show <nome> [--artifact <id>] [--spec <id>] [--json]
+agentic-fy show <nome> [--artifact <id>] [--spec <id>] [--json]
 ```
 
 Mostra uma change. Sem flags, exibe um resumo: status, título, progresso de tarefas e quais artefatos existem.
 
 - `--artifact <proposal|design|tasks>` — imprime o conteúdo cru daquele artefato.
-- `--spec <id>` — imprime o conteúdo de uma spec do projeto (`agentic/specs/<id>.md`); independe da change.
+- `--spec <id>` — imprime o conteúdo de uma spec do projeto (`agentic-fy/specs/<id>.md`); independe da change.
 - `--json` — resumo estruturado da change.
 
 Se o nome não bater com nenhuma change, o comando sugere os nomes mais próximos ("você quis dizer?").
@@ -127,7 +127,7 @@ Se o nome não bater com nenhuma change, o comando sugere os nomes mais próximo
 ## validate
 
 ```bash
-agentic validate [nome] [--all] [--strict] [--json]
+agentic-fy validate [nome] [--all] [--strict] [--json]
 ```
 
 Valida os artefatos de uma change e reporta problemas com nível `ERROR`, `WARNING` ou `INFO`. Diferente do `verify` (que só confere presença e checkboxes), o `validate` detecta artefatos que *parecem* prontos mas não estão:
@@ -148,7 +148,7 @@ Se `nome` for omitido e houver exatamente uma change ativa, ela é usada. O cód
 ## status
 
 ```bash
-agentic status [--json]
+agentic-fy status [--json]
 ```
 
 Panorama das changes ativas: quantas existem, em que estágio estão e quanto falta. Para cada change mostra o status, o progresso de tarefas e um resumo de problemas (`ok`, `N aviso(s)` ou `N erro(s)`, vindos da mesma checagem do `validate`). Útil como visão geral antes de decidir no que trabalhar.
@@ -156,11 +156,11 @@ Panorama das changes ativas: quantas existem, em que estágio estão e quanto fa
 ## config
 
 ```bash
-agentic config show [--json]
-agentic config set <chave> <valor>
+agentic-fy config show [--json]
+agentic-fy config set <chave> <valor>
 ```
 
-Lê ou edita o `agentic.config.yaml`.
+Lê ou edita o `agentic-fy.config.yaml`.
 
 - `config show` — mostra `version`, `schema` e o `workflow`.
 - `config set <chave> <valor>` — altera um valor. Chaves editáveis: `version` (inteiro positivo) e `schema`. O valor é validado pelo schema antes de gravar, então nunca se escreve uma config inválida.
@@ -168,13 +168,13 @@ Lê ou edita o `agentic.config.yaml`.
 ## doctor
 
 ```bash
-agentic doctor [--json]
+agentic-fy doctor [--json]
 ```
 
 Verifica a integridade do projeto (somente leitura, não repara nada):
 
-- `agentic.config.yaml` existe e é válido;
-- diretórios em `changes/` sem `.agentic.yaml` (não são changes válidas) — `WARNING`;
+- `agentic-fy.config.yaml` existe e é válido;
+- diretórios em `changes/` sem `.agentic-fy.yaml` (não são changes válidas) — `WARNING`;
 - changes com metadata ilegível — `ERROR`;
 - erros estruturais dos artefatos (ex.: `tasks.md` sem checkbox) — `ERROR`.
 
@@ -183,7 +183,7 @@ O código de saída é `1` quando há algum `ERROR`. Diferente do `validate` (fo
 ## context
 
 ```bash
-agentic context [--json]
+agentic-fy context [--json]
 ```
 
 Reúne num só lugar o contexto do projeto: config (schema e workflow), as changes ativas com estágio e progresso, e as specs do projeto. Pensado para alimentar um agente de IA com o estado inteiro de uma vez. Em texto sai como um brief legível; com `--json`, estruturado.
@@ -191,21 +191,21 @@ Reúne num só lugar o contexto do projeto: config (schema e workflow), as chang
 ## completion
 
 ```bash
-agentic completion [shell]
+agentic-fy completion [shell]
 ```
 
 Imprime no stdout um script de autocompletar para o shell (`powershell`, `bash` ou `zsh`). Se o shell não for informado, tenta detectar pelo ambiente. Não instala nada automaticamente — você redireciona para onde preferir:
 
 ```bash
-agentic completion bash >> ~/.bashrc     # Bash
-agentic completion zsh  >> ~/.zshrc      # Zsh
-agentic completion powershell            # PowerShell: cole no seu $PROFILE
+agentic-fy completion bash >> ~/.bashrc     # Bash
+agentic-fy completion zsh  >> ~/.zshrc      # Zsh
+agentic-fy completion powershell            # PowerShell: cole no seu $PROFILE
 ```
 
 ## view
 
 ```bash
-agentic view [--static] [--json]
+agentic-fy view [--static] [--json]
 ```
 
 Dashboard de specs e changes. Mostra um resumo (contagem de changes/specs e progresso total de tarefas) e agrupa as changes por estágio: rascunhos (`exploring`/`proposed`), em andamento (`applying`, com barra de progresso) e prontas (`verified`).
@@ -218,7 +218,7 @@ Modos:
 ## mcp
 
 ```bash
-agentic mcp
+agentic-fy mcp
 ```
 
 Inicia o servidor MCP (Model Context Protocol) via stdio, expondo os comandos como ferramentas consumíveis por um agente de IA. Ferramentas registradas: `explore`, `propose`, `apply`, `verify`, `archive`, `list`, `show`, `validate`, `status`, `context`.
@@ -232,9 +232,9 @@ Crie (ou edite) o arquivo de configuração MCP do Kiro:
 ```json
 {
   "mcpServers": {
-    "agentic": {
+    "agentic-fy": {
       "command": "npx",
-      "args": ["-y", "@agentic-fy/agentic", "mcp"],
+      "args": ["-y", "agentic-fy", "mcp"],
       "disabled": false,
       "autoApprove": ["explore"]
     }
@@ -242,13 +242,13 @@ Crie (ou edite) o arquivo de configuração MCP do Kiro:
 }
 ```
 
-Se o `agentic` estiver instalado globalmente, você pode usar o binário direto:
+Se o `agentic-fy` estiver instalado globalmente, você pode usar o binário direto:
 
 ```json
 {
   "mcpServers": {
-    "agentic": {
-      "command": "agentic",
+    "agentic-fy": {
+      "command": "agentic-fy",
       "args": ["mcp"],
       "disabled": false,
       "autoApprove": ["explore"]

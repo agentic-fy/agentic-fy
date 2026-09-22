@@ -1,8 +1,8 @@
 # Primeiros passos
 
-Este guia explica como o agentic funciona, da instalação à sua primeira mudança. Novo em toda a documentação? O [índice](README.md) mapeia tudo.
+Este guia explica como o agentic-fy funciona, da instalação à sua primeira mudança. Novo em toda a documentação? O [índice](README.md) mapeia tudo.
 
-O agentic é um CLI Node.js. Você precisa da versão 20.19.0 ou mais nova.
+O agentic-fy é um CLI Node.js. Você precisa da versão 20.19.0 ou mais nova.
 
 ## Instalação
 
@@ -17,19 +17,19 @@ Se imprimir `v20.19.0` ou superior, você está pronto. Se não, instale um Node
 Instale o CLI globalmente:
 
 ```bash
-npm install -g @agentic-fy/agentic
+npm install -g agentic-fy
 ```
 
 Se você não puder instalar global (erro de permissão em `/usr/local`), rode direto sem instalar:
 
 ```bash
-npx @agentic-fy/agentic --version
+npx agentic-fy --version
 ```
 
 ### Confirme que funcionou
 
 ```bash
-agentic --version
+agentic-fy --version
 ```
 
 Se imprimir o logo e um número de versão, o CLI está no seu PATH.
@@ -39,48 +39,48 @@ Se imprimir o logo e um número de versão, o CLI está no seu PATH.
 O loop inteiro:
 
 ```text
-$ npm install -g @agentic-fy/agentic
-$ cd seu-projeto && agentic init
-$ agentic explore                    (opcional: pense primeiro)
-$ agentic propose add-dark-mode      (rascunha o plano; você revisa)
-$ agentic apply                      (acompanha as tarefas)
-$ agentic verify                     (confere se está pronto)
-$ agentic archive                    (change arquivada)
+$ npm install -g agentic-fy
+$ cd seu-projeto && agentic-fy init
+$ agentic-fy explore                    (opcional: pense primeiro)
+$ agentic-fy propose add-dark-mode      (rascunha o plano; você revisa)
+$ agentic-fy apply                      (acompanha as tarefas)
+$ agentic-fy verify                     (confere se está pronto)
+$ agentic-fy archive                    (change arquivada)
 ```
 
-> **Não sabe ainda o que construir? Comece com `agentic explore`.** É um parceiro de raciocínio sem compromisso: mostra o estado do projeto e as changes ativas, e ajuda a transformar uma ideia difusa num plano concreto antes de qualquer código.
+> **Não sabe ainda o que construir? Comece com `agentic-fy explore`.** É um parceiro de raciocínio sem compromisso: mostra o estado do projeto e as changes ativas, e ajuda a transformar uma ideia difusa num plano concreto antes de qualquer código.
 
-## O que o agentic cria
+## O que o agentic-fy cria
 
-Depois de rodar `agentic init`, seu projeto ganha esta estrutura:
+Depois de rodar `agentic-fy init`, seu projeto ganha esta estrutura:
 
 ```
-agentic.config.yaml     # configuração do projeto
-agentic/
+agentic-fy.config.yaml     # configuração do projeto
+agentic-fy/
 ├── specs/              # specs do projeto
 ├── changes/            # mudanças propostas (uma pasta por change)
 │   └── archive/        # changes concluídas
 ```
 
-O `init` cria a estrutura base de forma idempotente (rodar de novo não sobrescreve o `agentic.config.yaml`) e também **configura a integração MCP da sua IDE**. No terminal ele pergunta para qual ferramenta configurar (Kiro, Cursor, GitHub Copilot, Claude Code, Windsurf) e escreve o `mcp.json` correspondente apontando para `agentic mcp`. Para pular o prompt, use `--tools`:
+O `init` cria a estrutura base de forma idempotente (rodar de novo não sobrescreve o `agentic-fy.config.yaml`) e também **configura a integração MCP da sua IDE**. No terminal ele pergunta para qual ferramenta configurar (Kiro, Cursor, GitHub Copilot, Claude Code, Windsurf) e escreve o `mcp.json` correspondente apontando para `agentic-fy mcp`. Para pular o prompt, use `--tools`:
 
 ```bash
-agentic init --tools kiro,cursor   # configura as ferramentas escolhidas
-agentic init --tools none          # só a estrutura base
+agentic-fy init --tools kiro,cursor   # configura as ferramentas escolhidas
+agentic-fy init --tools none          # só a estrutura base
 ```
 
-O merge é não-destrutivo: se você já tem um `mcp.json`, o agentic só adiciona o próprio servidor sem apagar o resto. Veja [Comandos](commands.md#init) para os detalhes.
+O merge é não-destrutivo: se você já tem um `mcp.json`, o agentic-fy só adiciona o próprio servidor sem apagar o resto. Veja [Comandos](commands.md#init) para os detalhes.
 
 Quando você cria uma change com `propose`, ela fica assim:
 
 ```
-agentic/changes/<nome-da-change>/
+agentic-fy/changes/<nome-da-change>/
 ├── proposal.md
 ├── design.md
 ├── tasks.md
 ├── specs/
 │   └── spec.md
-└── .agentic.yaml       # metadata (nome, status, datas)
+└── .agentic-fy.yaml       # metadata (nome, status, datas)
 ```
 
 ## Entendendo os artefatos
@@ -113,13 +113,13 @@ Vamos adicionar dark mode a uma aplicação.
 
 ```bash
 cd seu-projeto
-agentic init
+agentic-fy init
 ```
 
 ### 2. Crie a change
 
 ```text
-$ agentic propose add-dark-mode
+$ agentic-fy propose add-dark-mode
 
 [propose] add-dark-mode
 Criado: proposal.md
@@ -130,7 +130,7 @@ Criado: specs/spec.md
 
 ### 3. Preencha os artefatos
 
-Edite os arquivos em `agentic/changes/add-dark-mode/`:
+Edite os arquivos em `agentic-fy/changes/add-dark-mode/`:
 - `proposal.md` — por que e o que muda.
 - `design.md` — como fazer.
 - `tasks.md` — marque as tarefas reais, por exemplo:
@@ -146,7 +146,7 @@ Edite os arquivos em `agentic/changes/add-dark-mode/`:
 ### 4. Acompanhe a implementação
 
 ```text
-$ agentic apply
+$ agentic-fy apply
 
 [apply] add-dark-mode
 Aplicando a change "add-dark-mode".
@@ -161,7 +161,7 @@ Implemente as tarefas e marque-as como `[x]` no `tasks.md` conforme conclui.
 ### 5. Verifique
 
 ```text
-$ agentic verify
+$ agentic-fy verify
 
 [verify] add-dark-mode
 Todos os artefatos presentes (proposal, design, tasks).
@@ -174,20 +174,20 @@ O `verify` só marca como concluído quando todos os artefatos existem e todas a
 ### 6. Arquive
 
 ```text
-$ agentic archive
+$ agentic-fy archive
 
 [archive] add-dark-mode
-Change "add-dark-mode" arquivada em agentic/changes/archive/add-dark-mode.
+Change "add-dark-mode" arquivada em agentic-fy/changes/archive/add-dark-mode.
 ```
 
 ## Deixando a IA conduzir (MCP)
 
 Os comandos acima rodam no terminal. Para o seu assistente de IA conduzir o workflow, use o servidor MCP.
 
-Se você escolheu uma ferramenta no `agentic init` (ou passou `--tools`), o `mcp.json` da sua IDE já foi configurado — é só reiniciar/recarregar a IDE. Para configurar manualmente ou subir o servidor à mão:
+Se você escolheu uma ferramenta no `agentic-fy init` (ou passou `--tools`), o `mcp.json` da sua IDE já foi configurado — é só reiniciar/recarregar a IDE. Para configurar manualmente ou subir o servidor à mão:
 
 ```bash
-agentic mcp
+agentic-fy mcp
 ```
 
 Ele expõe as ferramentas `explore`, `propose`, `apply`, `verify`, `archive`, `list`, `show` e `validate` para qualquer agente compatível com MCP. Veja [Comandos](commands.md#mcp) para a configuração em editores como o Kiro.

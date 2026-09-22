@@ -4,21 +4,21 @@ import path from 'path';
 import { AiTool } from './tools.js';
 
 /**
- * Geração/merge da configuração MCP por ferramenta.
+ * Per-tool MCP configuration generation/merge.
  *
- * Espelha o propósito do `generateSkillsAndCommands` do projeto de referência
- * (/base) — deixar a ferramenta escolhida pronta para usar o agentic — mas
- * adaptado ao modelo MCP-first: escreve (ou mescla) o arquivo de config MCP da
- * IDE apontando para `agentic mcp`.
+ * Mirrors the purpose of `generateSkillsAndCommands` from the reference project
+ * (/base) — getting the chosen tool ready to use agentic-fy — but adapted to the
+ * MCP-first model: it writes (or merges) the IDE's MCP config file pointing to
+ * `agentic-fy mcp`.
  *
- * Melhorias sobre o /base:
- *  - merge NÃO-destrutivo: preserva outros servidores e chaves do usuário;
- *  - idempotente: rodar de novo não duplica nem sobrescreve config manual;
- *  - sem dependências (JSON nativo).
+ * Improvements over /base:
+ *  - NON-destructive merge: preserves other servers and the user's keys;
+ *  - idempotent: running again does not duplicate or overwrite manual config;
+ *  - dependency-free (native JSON).
  */
 
-/** Nome do servidor MCP do agentic dentro do arquivo de config. */
-export const MCP_SERVER_NAME = 'agentic';
+/** Name of agentic-fy's MCP server inside the config file. */
+export const MCP_SERVER_NAME = 'agentic-fy';
 
 export type ToolSetupOutcome = 'created' | 'updated' | 'unchanged';
 
@@ -28,31 +28,30 @@ export interface ToolSetupResult {
   outcome: ToolSetupOutcome;
 }
 
-/** A definição do servidor MCP do agentic que escrevemos na config. */
+/** The agentic-fy MCP server definition that we write into the config. */
 function agenticServerEntry(): Record<string, unknown> {
   return {
     command: 'npx',
-    args: ['-y', '@agentic-fy/agentic', 'mcp'],
+    args: ['-y', 'agentic-fy', 'mcp'],
     disabled: false,
-    // Ferramentas de leitura podem rodar sem confirmação; as de escrita não.
+    // Read tools can run without confirmation; write ones cannot.
     autoApprove: ['explore', 'list', 'show', 'validate'],
   };
 }
 
-/** Compara duas entradas de servidor de forma estável (ordem de chaves). */
+/** Compares two server entries stably (key order). */
 function sameEntry(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
 /**
- * Escreve/mescla a config MCP de uma ferramenta. Não sobrescreve outros
- * servidores nem chaves já presentes; só garante que o servidor `agentic`
- * exista e esteja atualizado.
+ * Writes/merges a tool's MCP config. Does not overwrite other servers or keys
+ * already present; it only ensures the `agentic-fy` server exists and is up to date.
  */
 export async function setupTool(root: string, tool: AiTool): Promise<ToolSetupResult> {
   const file = path.join(root, tool.mcpConfigPath);
 
-  // Lê a config existente (tolerante a arquivo ausente ou JSON inválido).
+  // Read the existing config (tolerant to a missing file or invalid JSON).
   let config: Record<string, unknown> = {};
   let existed = false;
   if (existsSync(file)) {
@@ -64,8 +63,8 @@ export async function setupTool(root: string, tool: AiTool): Promise<ToolSetupRe
         config = parsed as Record<string, unknown>;
       }
     } catch {
-      // JSON inválido/manual: preservamos o arquivo e não mexemos. Melhor
-      // avisar o usuário do que corromper a config dele.
+      // Invalid/manual JSON: we preserve the file and don't touch it. Better to
+      // warn the user than to corrupt their config.
       return { tool, file, outcome: 'unchanged' };
     }
   }
@@ -92,7 +91,7 @@ export async function setupTool(root: string, tool: AiTool): Promise<ToolSetupRe
   return { tool, file, outcome: existed ? 'updated' : 'created' };
 }
 
-/** Configura várias ferramentas em sequência. */
+/** Configures several tools in sequence. */
 export async function setupTools(root: string, tools: readonly AiTool[]): Promise<ToolSetupResult[]> {
   const results: ToolSetupResult[] = [];
   for (const tool of tools) {

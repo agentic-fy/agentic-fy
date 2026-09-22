@@ -2,41 +2,40 @@ import { existsSync } from 'fs';
 import path from 'path';
 
 /**
- * Catálogo das ferramentas de IA suportadas pela integração MCP do agentic.
+ * Catalog of AI tools supported by agentic-fy's MCP integration.
  *
- * Espelha os nomes/ids do projeto de referência (/base, `AI_TOOLS`), mas com o
- * foco do agentic: em vez de gerar skills em markdown por ferramenta, o
- * agentic é MCP-first e gera a *configuração MCP* de cada IDE apontando para
- * `agentic mcp`. Por isso cada entrada descreve ONDE fica o arquivo de config
- * MCP daquela ferramenta e QUAL a chave-raiz que ela usa.
+ * Mirrors the names/ids from the reference project (/base, `AI_TOOLS`), but with
+ * agentic-fy's focus: instead of generating per-tool markdown skills, agentic-fy is
+ * MCP-first and generates the *MCP configuration* of each IDE pointing to
+ * `agentic-fy mcp`. That's why each entry describes WHERE that tool's MCP config
+ * file lives and WHICH root key it uses.
  *
- * Sem dependências novas.
+ * No new dependencies.
  */
 
-/** Chave-raiz do JSON de config MCP: a maioria usa `mcpServers`; o padrão
- * do VS Code (Copilot) usa `servers`. */
+/** Root key of the MCP config JSON: most use `mcpServers`; the VS Code
+ * (Copilot) default uses `servers`. */
 export type McpRootKey = 'mcpServers' | 'servers';
 
 export interface AiTool {
-  /** Id estável (usado em --tools e na pré-seleção). Espelha o /base. */
+  /** Stable id (used in --tools and pre-selection). Mirrors /base. */
   id: string;
-  /** Nome amigável exibido no prompt. */
+  /** Friendly name shown in the prompt. */
   name: string;
-  /** Caminho (relativo à raiz do projeto) do arquivo de config MCP. */
+  /** Path (relative to the project root) of the MCP config file. */
   mcpConfigPath: string;
-  /** Chave-raiz onde os servidores MCP são declarados. */
+  /** Root key where the MCP servers are declared. */
   rootKey: McpRootKey;
   /**
-   * Caminhos (relativos à raiz) cuja existência indica que a ferramenta já é
-   * usada no projeto — habilita a pré-seleção no prompt, como no /base.
+   * Paths (relative to the root) whose existence indicates the tool is already
+   * used in the project — enables pre-selection in the prompt, like in /base.
    */
   detectionPaths: string[];
 }
 
 /**
- * Ferramentas suportadas. Lista enxuta e prática: as IDEs/agentes com suporte
- * a MCP mais comuns e documentados. Fácil de estender — basta adicionar uma
- * entrada aqui.
+ * Supported tools. A lean, practical list: the most common and best-documented
+ * MCP-capable IDEs/agents. Easy to extend — just add an entry here.
  */
 export const AI_TOOLS: readonly AiTool[] = [
   {
@@ -76,17 +75,17 @@ export const AI_TOOLS: readonly AiTool[] = [
   },
 ] as const;
 
-/** Todos os ids válidos, na ordem do catálogo. */
+/** All valid ids, in catalog order. */
 export const ALL_TOOL_IDS: readonly string[] = AI_TOOLS.map((t) => t.id);
 
-/** Busca uma ferramenta pelo id. */
+/** Looks up a tool by id. */
 export function findTool(id: string): AiTool | undefined {
   return AI_TOOLS.find((t) => t.id === id.trim().toLowerCase());
 }
 
 /**
- * Detecta quais ferramentas já são usadas no projeto (algum detectionPath
- * existe). Usada para pré-selecionar as ferramentas no prompt interativo.
+ * Detects which tools are already used in the project (some detectionPath
+ * exists). Used to pre-select the tools in the interactive prompt.
  */
 export function detectTools(root: string): AiTool[] {
   return AI_TOOLS.filter((tool) =>

@@ -6,21 +6,21 @@ import { artifactStates, readArtifact, parseTasks } from './artifacts.js';
 import { ARTIFACT_FILES, ChangeArtifact, CHANGE_ARTIFACTS } from './schema.js';
 
 /**
- * Inspeção do projeto: listar e mostrar changes/specs.
+ * Project inspection: list and show changes/specs.
  *
- * Reescreve, enxuto, o que os comandos `list` e `show` do projeto de
- * referência (/base) fazem — sem store, roots, parser de deltas nem inquirer.
- * Trabalha sobre os artefatos reais do agentic (proposal/design/tasks + specs).
+ * A lean rewrite of what the `list` and `show` commands of the reference
+ * project (/base) do — without store, roots, deltas parser, or inquirer.
+ * It works over agentic-fy's real artifacts (proposal/design/tasks + specs).
  */
 
-// ─── Progresso de tarefas ─────────────────────────────────────────────────────
+// ─── Task progress ───────────────────────────────────────────────────────────
 
 export interface TaskProgress {
   total: number;
   completed: number;
 }
 
-/** Conta tarefas (checkboxes) do tasks.md de uma change. */
+/** Counts tasks (checkboxes) from a change's tasks.md. */
 export async function taskProgress(root: string, changeName: string): Promise<TaskProgress> {
   const content = await readArtifact(root, changeName, 'tasks');
   if (!content) {
@@ -39,17 +39,17 @@ export interface ChangeSummary {
   tasks: TaskProgress;
 }
 
-/** Extrai o título (primeiro `# Heading`) de um markdown; cai no fallback. */
+/** Extracts the title (first `# Heading`) from markdown; falls back otherwise. */
 export function extractTitle(content: string, fallback: string): string {
   const match = content.match(/^#\s+(.+)$/m);
   const title = match?.[1].trim();
   if (!title) return fallback;
-  // Os templates abrem com "Proposta — <nome>"; isso é um título útil, então
-  // só descartamos títulos genéricos vazios.
+  // The templates open with "Proposal — <name>"; that's a useful title, so
+  // we only discard empty generic titles.
   return title;
 }
 
-/** Lista as changes ativas com status, título e progresso de tarefas. */
+/** Lists the active changes with status, title, and task progress. */
 export async function listChangeSummaries(root: string): Promise<ChangeSummary[]> {
   const changes = await listChanges(root);
   const summaries = await Promise.all(
@@ -67,7 +67,7 @@ export async function listChangeSummaries(root: string): Promise<ChangeSummary[]
   return summaries.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/** IDs das specs do projeto (arquivos em agentic/specs/). */
+/** IDs of the project specs (files in agentic-fy/specs/). */
 export async function listSpecIds(root: string): Promise<string[]> {
   const { specsDir } = resolveProjectPaths(root);
   if (!existsSync(specsDir)) return [];
@@ -90,7 +90,7 @@ export interface ChangeDetail {
   specs: string[];
 }
 
-/** Reúne os dados de uma change para exibição (não imprime nada). */
+/** Gathers a change's data for display (does not print anything). */
 export async function showChange(root: string, name: string): Promise<ChangeDetail> {
   const change = await readChange(root, name);
   const proposal = await readArtifact(root, change.name, 'proposal');
@@ -100,7 +100,7 @@ export async function showChange(root: string, name: string): Promise<ChangeDeta
     exists: s.exists,
   }));
 
-  // Specs internas da change (agentic/changes/<nome>/specs/*.md).
+  // The change's internal specs (agentic-fy/changes/<name>/specs/*.md).
   const changeSpecsDir = path.join(changeDir(root, change.name), SPECS_DIR);
   let specs: string[] = [];
   if (existsSync(changeSpecsDir)) {
@@ -122,7 +122,7 @@ export async function showChange(root: string, name: string): Promise<ChangeDeta
   };
 }
 
-/** Lê o conteúdo cru de um artefato de change (proposal/design/tasks). */
+/** Reads the raw content of a change artifact (proposal/design/tasks). */
 export async function readChangeArtifact(
   root: string,
   name: string,
@@ -131,22 +131,22 @@ export async function readChangeArtifact(
   const content = await readArtifact(root, name, id);
   if (content === null) {
     throw new Error(
-      `Artefato "${ARTIFACT_FILES[id]}" não encontrado na change "${name}".`
+      `Artifact "${ARTIFACT_FILES[id]}" not found in change "${name}".`
     );
   }
   return content;
 }
 
-/** Lê o conteúdo cru de uma spec do projeto (agentic/specs/<id>.md). */
+/** Reads the raw content of a project spec (agentic-fy/specs/<id>.md). */
 export async function readSpec(root: string, id: string): Promise<string> {
   const { specsDir } = resolveProjectPaths(root);
   const file = path.join(specsDir, `${id}.md`);
-  // Guarda contra path traversal via id.
+  // Guard against path traversal via id.
   if (path.dirname(path.resolve(file)) !== path.resolve(specsDir)) {
-    throw new Error(`Spec inválida: "${id}".`);
+    throw new Error(`Invalid spec: "${id}".`);
   }
   if (!existsSync(file)) {
-    throw new Error(`Spec "${id}" não encontrada em ${file}.`);
+    throw new Error(`Spec "${id}" not found in ${file}.`);
   }
   return fs.readFile(file, 'utf8');
 }

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 /**
- * Status possíveis de uma mudança (change) ao longo do workflow
+ * Possible statuses of a change throughout the workflow
  * explore -> propose -> apply -> verify -> archive.
  */
 export const CHANGE_STATUSES = [
@@ -16,10 +16,10 @@ export const ChangeStatusSchema = z.enum(CHANGE_STATUSES);
 export type ChangeStatus = z.infer<typeof ChangeStatusSchema>;
 
 /**
- * Metadata persistida em `agentic/changes/<nome>/.agentic.yaml`.
+ * Metadata persisted in `agentic-fy/changes/<name>/.agentic-fy.yaml`.
  */
 export const ChangeMetadataSchema = z.object({
-  name: z.string().min(1, 'name não pode ser vazio'),
+  name: z.string().min(1, 'name cannot be empty'),
   status: ChangeStatusSchema.default('exploring'),
   createdAt: z.string().min(1),
   updatedAt: z.string().min(1).optional(),
@@ -27,7 +27,7 @@ export const ChangeMetadataSchema = z.object({
 export type ChangeMetadata = z.infer<typeof ChangeMetadataSchema>;
 
 /**
- * Config base do projeto (`agentic.config.yaml`), criada pelo `init`.
+ * Base project config (`agentic-fy.config.yaml`), created by `init`.
  */
 export const ProjectConfigSchema = z.object({
   version: z.number().int().positive().default(1),
@@ -45,12 +45,12 @@ export const DEFAULT_PROJECT_CONFIG: ProjectConfig = {
 };
 
 /**
- * Artefatos que compõem uma mudança spec-driven.
+ * Artifacts that make up a spec-driven change.
  */
 export const CHANGE_ARTIFACTS = ['proposal', 'design', 'tasks'] as const;
 export type ChangeArtifact = (typeof CHANGE_ARTIFACTS)[number];
 
-/** Mapeia o id do artefato para o arquivo em disco dentro da change. */
+/** Maps the artifact id to the on-disk file within the change. */
 export const ARTIFACT_FILES: Record<ChangeArtifact, string> = {
   proposal: 'proposal.md',
   design: 'design.md',

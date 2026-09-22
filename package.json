@@ -1,13 +1,13 @@
 {
-  "name": "@agentic-fy/agentic",
-  "version": "0.1.2",
+  "name": "agentic-cli",
+  "version": "0.1.0",
   "description": "CLI TypeScript performático e enxuto para workflow spec-driven, com suporte a MCP",
   "type": "module",
   "publishConfig": {
     "access": "public"
   },
   "bin": {
-    "agentic": "bin/agentic.js"
+    "agentic-fy": "bin/agentic-fy.js"
   },
   "exports": {
     ".": {
@@ -25,7 +25,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "start": "node bin/agentic.js",
+    "start": "node bin/agentic-fy.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "prepublishOnly": "npm run build",
@@ -33,7 +33,7 @@
     "release:otp": "npm run build && npm publish --otp"
   },
   "keywords": [
-    "agentic",
+    "agentic-fy",
     "cli",
     "spec-driven",
     "mcp",

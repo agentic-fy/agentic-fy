@@ -6,12 +6,12 @@ import { buildDashboard, renderDashboard, DashboardData } from '../core/dashboar
 import { showChange, readSpec, ChangeSummary } from '../core/inspect.js';
 
 /**
- * Comando `view`: dashboard de specs e changes.
+ * `view` command: specs and changes dashboard.
  *
- * Espelha o `view` do projeto de referência (/base) — que é um painel
- * estático — e vai além: quando há terminal interativo (TTY), abre um modo
- * navegável por número (readline nativo, sem dependências). `--static` força
- * o painel estático; `--json` devolve os dados crus.
+ * Mirrors the `view` command from the reference project (/base) — which is a
+ * static panel — and goes further: when there's an interactive terminal (TTY),
+ * it opens a number-navigable mode (native readline, no dependencies). `--static`
+ * forces the static panel; `--json` returns the raw data.
  */
 
 function canPrompt(): boolean {
@@ -24,9 +24,9 @@ export function registerViewCommand(
 ): void {
   program
     .command('view')
-    .description('Dashboard de specs e changes (interativo no terminal)')
-    .option('--static', 'Imprime o painel estático e sai (sem navegação)')
-    .option('--json', 'Saída em JSON dos dados do dashboard')
+    .description('Specs and changes dashboard (interactive in the terminal)')
+    .option('--static', 'Prints the static panel and exits (no navigation)')
+    .option('--json', 'JSON output of the dashboard data')
     .action(async (options: { static?: boolean; json?: boolean }) => {
       try {
         const root = requireProjectRoot();
@@ -37,7 +37,7 @@ export function registerViewCommand(
           return;
         }
 
-        // Painel estático: quando pedido, ou quando não há TTY para navegar.
+        // Static panel: when requested, or when there's no TTY to navigate.
         if (options.static || !canPrompt()) {
           console.log(renderDashboard(data));
           return;
@@ -51,7 +51,7 @@ export function registerViewCommand(
     });
 }
 
-/** Loop interativo: mostra o painel + um menu numerado; navega para o detalhe. */
+/** Interactive loop: shows the panel + a numbered menu; navigates to the detail. */
 async function runInteractive(root: string, initial: DashboardData): Promise<void> {
   const readline = await import('node:readline/promises');
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -59,7 +59,7 @@ async function runInteractive(root: string, initial: DashboardData): Promise<voi
   try {
     let data = initial;
     for (;;) {
-      // Lista unificada e numerada: todas as changes (por estágio) + specs.
+      // Unified, numbered list: all changes (by stage) + specs.
       const changes: ChangeSummary[] = [...data.active, ...data.draft, ...data.done];
       const items: Array<{ kind: 'change' | 'spec'; id: string }> = [
         ...changes.map((c) => ({ kind: 'change' as const, id: c.name })),
@@ -70,20 +70,20 @@ async function runInteractive(root: string, initial: DashboardData): Promise<voi
       console.log(renderDashboard(data));
       console.log('');
       if (items.length === 0) {
-        console.log(chalk.dim('Nada para inspecionar. (q para sair)'));
+        console.log(chalk.dim('Nothing to inspect. (q to quit)'));
       } else {
-        console.log(chalk.bold('Selecione um item para ver o detalhe:'));
+        console.log(chalk.bold('Select an item to see the detail:'));
         items.forEach((it, i) => {
           const tag = it.kind === 'change' ? chalk.cyan('change') : chalk.magenta('spec');
           console.log(`  ${String(i + 1).padStart(2)}) [${tag}] ${it.id}`);
         });
       }
 
-      const answer = (await rl.question('\nNúmero para abrir, "r" para atualizar, "q" para sair: ')).trim().toLowerCase();
+      const answer = (await rl.question('\nNumber to open, "r" to refresh, "q" to quit: ')).trim().toLowerCase();
 
       if (answer === 'q' || answer === '') {
         if (answer === 'q') break;
-        // Enter sem número: apenas re-renderiza.
+        // Enter with no number: just re-render.
         continue;
       }
       if (answer === 'r') {
@@ -93,7 +93,7 @@ async function runInteractive(root: string, initial: DashboardData): Promise<voi
 
       const index = Number.parseInt(answer, 10);
       if (!Number.isInteger(index) || index < 1 || index > items.length) {
-        continue; // entrada inválida: volta ao painel
+        continue; // invalid input: back to the panel
       }
 
       const item = items[index - 1];
@@ -101,20 +101,20 @@ async function runInteractive(root: string, initial: DashboardData): Promise<voi
       if (item.kind === 'change') {
         const d = await showChange(root, item.id);
         console.log(chalk.bold(`${d.name}`) + chalk.dim(` (${d.status})`));
-        console.log(`Título: ${d.title}`);
-        console.log(`Tarefas: ${d.tasks.completed}/${d.tasks.total} concluídas`);
-        console.log('Artefatos:');
+        console.log(`Title: ${d.title}`);
+        console.log(`Tasks: ${d.tasks.completed}/${d.tasks.total} completed`);
+        console.log('Artifacts:');
         for (const a of d.artifacts) {
           console.log(`  ${a.exists ? chalk.green('✓') : chalk.red('✗')} ${a.file}`);
         }
-        if (d.specs.length > 0) console.log(`Specs da change: ${d.specs.join(', ')}`);
+        if (d.specs.length > 0) console.log(`Change specs: ${d.specs.join(', ')}`);
       } else {
         console.log(chalk.bold(`spec: ${item.id}`));
         console.log('');
         console.log(await readSpec(root, item.id));
       }
 
-      await rl.question(chalk.dim('\n[Enter] para voltar ao dashboard...'));
+      await rl.question(chalk.dim('\n[Enter] to go back to the dashboard...'));
     }
   } finally {
     rl.close();

@@ -11,26 +11,26 @@ import {
 import { ProjectConfigSchema, ProjectConfig } from '../core/schema.js';
 
 /**
- * Comando `config`: mostrar e editar o agentic.config.yaml.
+ * `config` command: show and edit agentic-fy.config.yaml.
  *
- * Reescreve, enxuto, a ideia do `config` do projeto de referência (/base):
- * ler/alterar a configuração do projeto pela CLI, sem store nem profiles.
- * Toda escrita passa pelo schema (zod), então nunca gravamos config inválido.
+ * A lean rewrite of the `config` idea from the reference project (/base):
+ * read/change the project configuration from the CLI, with no store or profiles.
+ * Every write goes through the schema (zod), so we never write invalid config.
  */
 
-/** Campos escalares editáveis via `config set`. */
+/** Scalar fields editable via `config set`. */
 const SETTABLE = ['version', 'schema'] as const;
 
 export function registerConfigCommand(
   program: Command,
   failWithError: (error: unknown) => void
 ): void {
-  const config = program.command('config').description('Mostra ou edita o agentic.config.yaml');
+  const config = program.command('config').description('Shows or edits agentic-fy.config.yaml');
 
   config
     .command('show')
-    .description('Mostra a configuração atual do projeto')
-    .option('--json', 'Saída em JSON')
+    .description('Shows the current project configuration')
+    .option('--json', 'JSON output')
     .action(async (options: { json?: boolean }) => {
       try {
         const root = requireProjectRoot();
@@ -38,7 +38,7 @@ export function registerConfigCommand(
         if (options.json) {
           console.log(JSON.stringify(cfg, null, 2));
         } else {
-          console.log(chalk.bold('agentic.config.yaml'));
+          console.log(chalk.bold('agentic-fy.config.yaml'));
           console.log(`  version:  ${cfg.version}`);
           console.log(`  schema:   ${cfg.schema}`);
           console.log(`  workflow: ${cfg.workflow.join(' → ')}`);
@@ -50,37 +50,37 @@ export function registerConfigCommand(
     });
 
   config
-    .command('set <chave> <valor>')
-    .description(`Define um valor de config. Chaves: ${SETTABLE.join(', ')}`)
-    .action(async (chave: string, valor: string) => {
+    .command('set <key> <value>')
+    .description(`Sets a config value. Keys: ${SETTABLE.join(', ')}`)
+    .action(async (key: string, value: string) => {
       try {
         const root = requireProjectRoot();
         const cfg = await readProjectConfig(root);
 
-        const key = chave.trim().toLowerCase();
-        if (!SETTABLE.includes(key as (typeof SETTABLE)[number])) {
+        const normalizedKey = key.trim().toLowerCase();
+        if (!SETTABLE.includes(normalizedKey as (typeof SETTABLE)[number])) {
           throw new Error(
-            `Chave não editável: "${chave}". Editáveis: ${SETTABLE.join(', ')}.`
+            `Key is not editable: "${key}". Editable: ${SETTABLE.join(', ')}.`
           );
         }
 
         const next: ProjectConfig = { ...cfg };
-        if (key === 'version') {
-          const n = Number.parseInt(valor, 10);
+        if (normalizedKey === 'version') {
+          const n = Number.parseInt(value, 10);
           if (!Number.isInteger(n) || n <= 0) {
-            throw new Error(`version deve ser um inteiro positivo (recebido: "${valor}").`);
+            throw new Error(`version must be a positive integer (received: "${value}").`);
           }
           next.version = n;
-        } else if (key === 'schema') {
-          next.schema = valor.trim();
+        } else if (normalizedKey === 'schema') {
+          next.schema = value.trim();
         }
 
-        // Valida antes de gravar; nunca escreve config inválido.
+        // Validate before writing; never write invalid config.
         const validated = ProjectConfigSchema.parse(next);
         const { configFile } = resolveProjectPaths(root);
         await fs.writeFile(configFile, serializeProjectConfig(validated), 'utf8');
 
-        console.log(chalk.green(`config atualizado: ${key} = ${valor}`));
+        console.log(chalk.green(`config updated: ${normalizedKey} = ${value}`));
       } catch (error) {
         failWithError(error);
         process.exit(1);

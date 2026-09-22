@@ -3,19 +3,19 @@ import { readArtifact, parseTasks, artifactTemplate } from './artifacts.js';
 import { CHANGE_ARTIFACTS, ARTIFACT_FILES, ChangeArtifact } from './schema.js';
 
 /**
- * Validação de artefatos de uma change.
+ * Validation of a change's artifacts.
  *
- * Reescrita enxuta da ideia do `validate` do projeto de referência (/base),
- * adaptada ao modelo do agentic (proposal/design/tasks), SEM o modelo de
- * deltas (## ADDED/MODIFIED Requirements), sem store/roots e sem dependências.
+ * A lean rewrite of the `validate` idea from the reference project (/base),
+ * adapted to agentic-fy's model (proposal/design/tasks), WITHOUT the deltas
+ * model (## ADDED/MODIFIED Requirements), without store/roots, and without dependencies.
  *
- * O que a validação cobre — cada regra existe porque o `verify` atual não a
- * pega e ela representa um artefato que "parece pronto e não está":
- *  1. artefato ausente;
- *  2. artefato ainda idêntico ao template (ninguém escreveu nada);
- *  3. artefato praticamente vazio;
- *  4. tasks.md sem nenhum checkbox de verdade (só texto solto);
- *  5. (informativo) tarefas ainda pendentes.
+ * What the validation covers — each rule exists because the current `verify`
+ * doesn't catch it and it represents an artifact that "looks ready but isn't":
+ *  1. missing artifact;
+ *  2. artifact still identical to the template (nobody wrote anything);
+ *  3. artifact practically empty;
+ *  4. tasks.md without any real checkbox (just loose text);
+ *  5. (informational) tasks still pending.
  */
 
 export type IssueLevel = 'ERROR' | 'WARNING' | 'INFO';
@@ -33,7 +33,7 @@ export interface ValidationReport {
   summary: { errors: number; warnings: number; info: number };
 }
 
-/** Normaliza markdown para comparação estrutural (ignora espaços/linhas em branco). */
+/** Normalizes markdown for structural comparison (ignores spaces/blank lines). */
 function normalize(md: string): string {
   return md
     .replace(/\r\n/g, '\n')
@@ -44,23 +44,23 @@ function normalize(md: string): string {
     .trim();
 }
 
-/** Conteúdo "real" do artefato: remove títulos, comentários e bullets vazios. */
+/** "Real" artifact content: strips headings, comments, and empty bullets. */
 function meaningfulBody(md: string): string {
   return md
     .replace(/\r\n/g, '\n')
     .split('\n')
     .map((l) => l.trim())
     .filter((l) => l.length > 0)
-    .filter((l) => !l.startsWith('#')) // headings do template
-    .filter((l) => !/^<!--.*-->$/.test(l)) // comentários
-    .filter((l) => !/^[-*]\s*$/.test(l)) // bullets vazios "- "
+    .filter((l) => !l.startsWith('#')) // template headings
+    .filter((l) => !/^<!--.*-->$/.test(l)) // comments
+    .filter((l) => !/^[-*]\s*$/.test(l)) // empty bullets "- "
     .join('\n')
     .trim();
 }
 
 const MIN_BODY_LENGTH = 24;
 
-/** Valida um único artefato de change, devolvendo issues. */
+/** Validates a single change artifact, returning issues. */
 function validateArtifact(
   id: ChangeArtifact,
   changeName: string,
@@ -68,49 +68,49 @@ function validateArtifact(
 ): ValidationIssue[] {
   const file = ARTIFACT_FILES[id];
   if (content === null) {
-    return [{ level: 'ERROR', path: file, message: `Artefato ausente: ${file}.` }];
+    return [{ level: 'ERROR', path: file, message: `Missing artifact: ${file}.` }];
   }
 
   const issues: ValidationIssue[] = [];
 
-  // Idêntico ao template = ninguém preencheu.
+  // Identical to the template = nobody filled it in.
   if (normalize(content) === normalize(artifactTemplate(id, changeName))) {
     issues.push({
       level: 'WARNING',
       path: file,
-      message: `${file} ainda está com o conteúdo do template (não foi preenchido).`,
+      message: `${file} still has the template content (it was not filled in).`,
     });
-    return issues; // não faz sentido acumular "quase vazio" por cima
+    return issues; // no point stacking "practically empty" on top
   }
 
-  // Corpo real muito curto.
+  // Real body too short.
   if (meaningfulBody(content).length < MIN_BODY_LENGTH) {
     issues.push({
       level: 'WARNING',
       path: file,
-      message: `${file} está praticamente vazio; descreva o conteúdo real.`,
+      message: `${file} is practically empty; describe the real content.`,
     });
   }
 
   return issues;
 }
 
-/** Valida o tasks.md além dos checks genéricos de artefato. */
+/** Validates tasks.md beyond the generic artifact checks. */
 function validateTasks(content: string | null): ValidationIssue[] {
-  if (content === null) return []; // ausência já reportada em validateArtifact
+  if (content === null) return []; // absence already reported in validateArtifact
   const issues: ValidationIssue[] = [];
   const tasks = parseTasks(content);
 
   if (tasks.length === 0) {
-    // Há texto/bullets, mas nenhum checkbox: o verify contaria "0 tarefas" e
-    // passaria batido. Espelha o alerta de checkbox do /base.
+    // There is text/bullets, but no checkbox: verify would count "0 tasks" and
+    // pass unnoticed. Mirrors the checkbox warning from /base.
     const hasBullets = /^\s*[-*+]\s+\S/m.test(content);
     issues.push({
       level: 'ERROR',
       path: ARTIFACT_FILES.tasks,
       message: hasBullets
-        ? 'tasks.md tem itens de lista, mas nenhum é checkbox. Escreva "- [ ] descrição".'
-        : 'tasks.md não define nenhuma tarefa (checkbox "- [ ]").',
+        ? 'tasks.md has list items, but none is a checkbox. Write "- [ ] description".'
+        : 'tasks.md does not define any task (checkbox "- [ ]").',
     });
     return issues;
   }
@@ -120,22 +120,22 @@ function validateTasks(content: string | null): ValidationIssue[] {
     issues.push({
       level: 'INFO',
       path: ARTIFACT_FILES.tasks,
-      message: `${pending} de ${tasks.length} tarefa(s) ainda pendente(s).`,
+      message: `${pending} of ${tasks.length} task(s) still pending.`,
     });
   }
   return issues;
 }
 
 /**
- * Valida uma change inteira. `strict` promove WARNING a fatal (afeta `valid`),
- * espelhando o `--strict` do /base.
+ * Validates an entire change. `strict` promotes WARNING to fatal (affects `valid`),
+ * mirroring `--strict` from /base.
  */
 export async function validateChange(
   root: string,
   name: string,
   strict = false
 ): Promise<ValidationReport> {
-  const change = await readChange(root, name); // lança se não existir
+  const change = await readChange(root, name); // throws if it does not exist
   const issues: ValidationIssue[] = [];
 
   const contents = new Map<ChangeArtifact, string | null>();

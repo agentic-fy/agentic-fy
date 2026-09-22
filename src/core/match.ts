@@ -1,19 +1,19 @@
 /**
- * Sugestão "você quis dizer?" para nomes digitados errado.
+ * "Did you mean?" suggestion for mistyped names.
  *
- * Reescrita enxuta do utilitário equivalente do projeto de referência (/base):
- * distância de Levenshtein pura, sem dependências. Usada pelos comandos que
- * resolvem uma change/spec por nome (show, validate) para orientar o usuário
- * quando o nome não bate.
+ * A lean rewrite of the equivalent utility from the reference project (/base):
+ * pure Levenshtein distance, no dependencies. Used by the commands that resolve
+ * a change/spec by name (show, validate) to guide the user when the name
+ * doesn't match.
  */
 
-/** Distância de edição (Levenshtein) entre duas strings. */
+/** Edit distance (Levenshtein) between two strings. */
 export function editDistance(a: string, b: string): number {
   if (a === b) return 0;
   if (a.length === 0) return b.length;
   if (b.length === 0) return a.length;
 
-  // Uma linha só de DP: O(min(a,b)) de memória.
+  // Single-row DP: O(min(a,b)) memory.
   let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
   let curr = new Array<number>(b.length + 1);
 
@@ -22,9 +22,9 @@ export function editDistance(a: string, b: string): number {
     for (let j = 1; j <= b.length; j++) {
       const cost = a[i - 1] === b[j - 1] ? 0 : 1;
       curr[j] = Math.min(
-        prev[j] + 1, // remoção
-        curr[j - 1] + 1, // inserção
-        prev[j - 1] + cost // substituição
+        prev[j] + 1, // deletion
+        curr[j - 1] + 1, // insertion
+        prev[j - 1] + cost // substitution
       );
     }
     [prev, curr] = [curr, prev];
@@ -33,9 +33,9 @@ export function editDistance(a: string, b: string): number {
 }
 
 /**
- * Retorna os candidatos mais próximos de `input`, ordenados por proximidade.
- * Ignora candidatos distantes demais (relativo ao tamanho) para não sugerir
- * lixo. Retorna no máximo `limit` nomes.
+ * Returns the candidates closest to `input`, ordered by proximity.
+ * Ignores candidates that are too far (relative to length) so as not to suggest
+ * garbage. Returns at most `limit` names.
  */
 export function nearestMatches(
   input: string,
@@ -48,7 +48,7 @@ export function nearestMatches(
       candidate,
       distance: editDistance(needle, candidate.toLowerCase()),
     }))
-    // Tolerância proporcional: nomes curtos exigem mais precisão.
+    // Proportional tolerance: short names require more precision.
     .filter(({ candidate, distance }) => distance <= Math.max(2, Math.floor(candidate.length / 2)))
     .sort((a, b) => a.distance - b.distance || a.candidate.localeCompare(b.candidate));
 

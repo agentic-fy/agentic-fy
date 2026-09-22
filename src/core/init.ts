@@ -14,15 +14,15 @@ export interface InitResult {
 }
 
 /**
- * Cria apenas a estrutura base do projeto, espelhando o núcleo do `init`
- * do projeto de referência (/base): diretórios + config.yaml.
+ * Creates only the base project structure, mirroring the core of the `init`
+ * command from the reference project (/base): directories + config.yaml.
  *
- * Idempotente:
- * - diretórios são criados com { recursive: true } (não falha se existirem);
- * - o config só é escrito quando ainda não existe.
+ * Idempotent:
+ * - directories are created with { recursive: true } (does not fail if they exist);
+ * - the config is only written when it doesn't exist yet.
  *
- * Quando `tools` é informado, também gera/mescla a configuração MCP de cada
- * ferramenta escolhida (apontando para `agentic mcp`), de forma não-destrutiva.
+ * When `tools` is provided, it also generates/merges the MCP configuration of
+ * each selected tool (pointing to `agentic-fy mcp`), non-destructively.
  */
 export async function initProject(
   targetPath = '.',
@@ -31,7 +31,7 @@ export async function initProject(
   const root = path.resolve(targetPath);
   const paths = resolveProjectPaths(root);
 
-  // Diretórios base (com .gitkeep para versionar pastas vazias).
+  // Base directories (with .gitkeep to version empty folders).
   const directories = [paths.agenticDir, paths.specsDir, paths.changesDir, paths.archiveDir];
   const createdDirs: string[] = [];
   for (const dir of directories) {
@@ -44,7 +44,7 @@ export async function initProject(
   await writeGitkeep(paths.specsDir);
   await writeGitkeep(paths.archiveDir);
 
-  // Config: cria só se não existir.
+  // Config: create only if it doesn't exist.
   let configStatus: 'created' | 'exists';
   if (existsSync(paths.configFile)) {
     configStatus = 'exists';
@@ -57,7 +57,7 @@ export async function initProject(
     configStatus = 'created';
   }
 
-  // Configura a integração MCP das ferramentas escolhidas (não-destrutivo).
+  // Configure the MCP integration of the selected tools (non-destructive).
   const toolResults = tools.length > 0 ? await setupTools(root, tools) : [];
 
   return { root, createdDirs, configStatus, tools: toolResults };

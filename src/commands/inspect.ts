@@ -17,16 +17,16 @@ import { nearestMatches } from '../core/match.js';
 import { CHANGE_ARTIFACTS, ChangeArtifact } from '../core/schema.js';
 
 /**
- * Comandos de inspeção: list, show, validate.
+ * Inspection commands: list, show, validate.
  *
- * Reescrita enxuta das funcionalidades equivalentes do projeto de referência
- * (/base). Cada handler delega às funções puras do core e formata a saída.
- * Suportam `--json` onde faz sentido, sem prompts interativos.
+ * A lean rewrite of the equivalent features from the reference project
+ * (/base). Each handler delegates to the pure core functions and formats the
+ * output. They support `--json` where it makes sense, with no interactive prompts.
  */
 
 // ─── helpers ───────────────────────────────────────────────────────────────────
 
-/** Resolve o nome de uma change existente ou lança com sugestão "did you mean". */
+/** Resolves the name of an existing change or throws with a "did you mean" suggestion. */
 async function resolveChangeName(root: string, name: string): Promise<string> {
   const changes = await listChanges(root);
   const names = changes.map((c) => c.name);
@@ -34,11 +34,11 @@ async function resolveChangeName(root: string, name: string): Promise<string> {
 
   const suggestions = nearestMatches(name, names);
   const hint = suggestions.length
-    ? ` Você quis dizer: ${suggestions.join(', ')}?`
+    ? ` Did you mean: ${suggestions.join(', ')}?`
     : names.length
-      ? ` Ativas: ${names.join(', ')}.`
+      ? ` Active: ${names.join(', ')}.`
       : '';
-  throw new Error(`Change "${name}" não encontrada.${hint}`);
+  throw new Error(`Change "${name}" not found.${hint}`);
 }
 
 function levelPrefix(level: 'ERROR' | 'WARNING' | 'INFO'): string {
@@ -54,10 +54,10 @@ export function registerInspectCommands(
   // ─── list ────────────────────────────────────────────────────────────────
   program
     .command('list')
-    .description('Lista as changes ativas (e specs com --specs)')
-    .option('--specs', 'Lista as specs do projeto em vez das changes')
-    .option('--long', 'Mostra título e progresso de tarefas')
-    .option('--json', 'Saída em JSON')
+    .description('Lists the active changes (and specs with --specs)')
+    .option('--specs', 'Lists the project specs instead of the changes')
+    .option('--long', 'Shows title and task progress')
+    .option('--json', 'JSON output')
     .action(async (options: { specs?: boolean; long?: boolean; json?: boolean }) => {
       try {
         const root = requireProjectRoot();
@@ -67,7 +67,7 @@ export function registerInspectCommands(
           if (options.json) {
             console.log(JSON.stringify(specs, null, 2));
           } else if (specs.length === 0) {
-            console.log('Nenhuma spec encontrada.');
+            console.log('No specs found.');
           } else {
             specs.forEach((id) => console.log(id));
           }
@@ -80,7 +80,7 @@ export function registerInspectCommands(
           return;
         }
         if (summaries.length === 0) {
-          console.log('Nenhuma change ativa. Rode "agentic propose <nome>".');
+          console.log('No active changes. Run "agentic-fy propose <name>".');
           return;
         }
         for (const s of summaries) {
@@ -88,7 +88,7 @@ export function registerInspectCommands(
             console.log(s.name);
             continue;
           }
-          const tasks = s.tasks.total > 0 ? ` [tarefas ${s.tasks.completed}/${s.tasks.total}]` : '';
+          const tasks = s.tasks.total > 0 ? ` [tasks ${s.tasks.completed}/${s.tasks.total}]` : '';
           console.log(
             `${chalk.bold(s.name)} ${chalk.dim(`(${s.status})`)}: ${s.title}${chalk.dim(tasks)}`
           );
@@ -101,33 +101,33 @@ export function registerInspectCommands(
 
   // ─── show ────────────────────────────────────────────────────────────────
   program
-    .command('show <nome>')
-    .description('Mostra uma change (ou um artefato/spec específico)')
-    .option('--artifact <id>', `Mostra um artefato: ${CHANGE_ARTIFACTS.join(' | ')}`)
-    .option('--spec <id>', 'Mostra o conteúdo de uma spec do projeto (agentic/specs/<id>.md)')
-    .option('--json', 'Saída em JSON (resumo estruturado da change)')
+    .command('show <name>')
+    .description('Shows a change (or a specific artifact/spec)')
+    .option('--artifact <id>', `Shows an artifact: ${CHANGE_ARTIFACTS.join(' | ')}`)
+    .option('--spec <id>', 'Shows the content of a project spec (agentic-fy/specs/<id>.md)')
+    .option('--json', 'JSON output (structured summary of the change)')
     .action(
       async (
-        nome: string,
+        name: string,
         options: { artifact?: string; spec?: string; json?: boolean }
       ) => {
         try {
           const root = requireProjectRoot();
 
-          // Mostrar uma spec do projeto (independe de change).
+          // Show a project spec (independent of any change).
           if (options.spec) {
             console.log(await readSpec(root, options.spec));
             return;
           }
 
-          const changeName = await resolveChangeName(root, nome);
+          const changeName = await resolveChangeName(root, name);
 
-          // Mostrar um artefato cru.
+          // Show a raw artifact.
           if (options.artifact) {
             const id = options.artifact.toLowerCase();
             if (!CHANGE_ARTIFACTS.includes(id as ChangeArtifact)) {
               throw new Error(
-                `Artefato inválido: "${options.artifact}". Use: ${CHANGE_ARTIFACTS.join(', ')}.`
+                `Invalid artifact: "${options.artifact}". Use: ${CHANGE_ARTIFACTS.join(', ')}.`
               );
             }
             console.log(await readChangeArtifact(root, changeName, id as ChangeArtifact));
@@ -141,17 +141,17 @@ export function registerInspectCommands(
           }
 
           console.log(chalk.bold(`${detail.name}`) + chalk.dim(` (${detail.status})`));
-          console.log(`Título: ${detail.title}`);
+          console.log(`Title: ${detail.title}`);
           console.log(
-            `Tarefas: ${detail.tasks.completed}/${detail.tasks.total} concluídas`
+            `Tasks: ${detail.tasks.completed}/${detail.tasks.total} completed`
           );
-          console.log('Artefatos:');
+          console.log('Artifacts:');
           for (const a of detail.artifacts) {
             const mark = a.exists ? chalk.green('✓') : chalk.red('✗');
             console.log(`  ${mark} ${a.file}`);
           }
           if (detail.specs.length > 0) {
-            console.log(`Specs da change: ${detail.specs.join(', ')}`);
+            console.log(`Change specs: ${detail.specs.join(', ')}`);
           }
         } catch (error) {
           failWithError(error);
@@ -162,14 +162,14 @@ export function registerInspectCommands(
 
   // ─── validate ──────────────────────────────────────────────────────────────
   program
-    .command('validate [nome]')
-    .description('Valida os artefatos de uma change (ou de todas com --all)')
-    .option('--all', 'Valida todas as changes ativas')
-    .option('--strict', 'Trata avisos (WARNING) como falha')
-    .option('--json', 'Saída em JSON')
+    .command('validate [name]')
+    .description('Validates the artifacts of a change (or of all with --all)')
+    .option('--all', 'Validates all active changes')
+    .option('--strict', 'Treats warnings (WARNING) as failures')
+    .option('--json', 'JSON output')
     .action(
       async (
-        nome: string | undefined,
+        name: string | undefined,
         options: { all?: boolean; strict?: boolean; json?: boolean }
       ) => {
         try {
@@ -178,19 +178,19 @@ export function registerInspectCommands(
           let targets: string[];
           if (options.all) {
             targets = (await listChanges(root)).map((c) => c.name).sort();
-          } else if (nome) {
-            targets = [await resolveChangeName(root, nome)];
+          } else if (name) {
+            targets = [await resolveChangeName(root, name)];
           } else {
             const active = await listChanges(root);
             if (active.length === 1) {
               targets = [active[0].name];
             } else if (active.length === 0) {
-              throw new Error('Nenhuma change ativa. Rode "agentic propose <nome>".');
+              throw new Error('No active changes. Run "agentic-fy propose <name>".');
             } else {
               throw new Error(
-                `Há várias changes ativas (${active
+                `There are multiple active changes (${active
                   .map((c) => c.name)
-                  .join(', ')}). Informe o nome ou use --all.`
+                  .join(', ')}). Provide the name or use --all.`
               );
             }
           }
@@ -204,8 +204,8 @@ export function registerInspectCommands(
           } else {
             for (const report of reports) {
               const head = report.valid
-                ? chalk.green(`✓ ${report.change} — válida`)
-                : chalk.red(`✗ ${report.change} — com problemas`);
+                ? chalk.green(`✓ ${report.change} — valid`)
+                : chalk.red(`✗ ${report.change} — has issues`);
               console.log(head);
               for (const issue of report.issues) {
                 const line = `  ${levelPrefix(issue.level)} [${issue.level}] ${issue.path}: ${issue.message}`;
@@ -227,8 +227,8 @@ export function registerInspectCommands(
   // ─── status ──────────────────────────────────────────────────────────────
   program
     .command('status')
-    .description('Panorama das changes ativas: estágio, progresso e problemas')
-    .option('--json', 'Saída em JSON')
+    .description('Overview of active changes: stage, progress, and issues')
+    .option('--json', 'JSON output')
     .action(async (options: { json?: boolean }) => {
       try {
         const root = requireProjectRoot();
@@ -238,20 +238,20 @@ export function registerInspectCommands(
           return;
         }
         if (status.total === 0) {
-          console.log('Nenhuma change ativa. Rode "agentic propose <nome>".');
+          console.log('No active changes. Run "agentic-fy propose <name>".');
           return;
         }
         const byStatus = Object.entries(status.byStatus)
           .map(([s, n]) => `${s}: ${n}`)
           .join(', ');
-        console.log(chalk.bold(`Changes ativas: ${status.total}`) + chalk.dim(` (${byStatus})`));
+        console.log(chalk.bold(`Active changes: ${status.total}`) + chalk.dim(` (${byStatus})`));
         for (const c of status.changes) {
-          const tasks = `tarefas ${c.tasks.completed}/${c.tasks.total}`;
+          const tasks = `tasks ${c.tasks.completed}/${c.tasks.total}`;
           const problems =
             c.errors > 0
-              ? chalk.red(` ${c.errors} erro(s)`)
+              ? chalk.red(` ${c.errors} error(s)`)
               : c.warnings > 0
-                ? chalk.yellow(` ${c.warnings} aviso(s)`)
+                ? chalk.yellow(` ${c.warnings} warning(s)`)
                 : chalk.green(' ok');
           console.log(
             `  ${chalk.bold(c.name)} ${chalk.dim(`(${c.status})`)} — ${tasks} ·${problems}`
@@ -266,8 +266,8 @@ export function registerInspectCommands(
   // ─── doctor ──────────────────────────────────────────────────────────────
   program
     .command('doctor')
-    .description('Verifica a integridade do projeto (config, metadata, artefatos)')
-    .option('--json', 'Saída em JSON')
+    .description('Checks the project integrity (config, metadata, artifacts)')
+    .option('--json', 'JSON output')
     .action(async (options: { json?: boolean }) => {
       try {
         const root = requireProjectRoot();
@@ -275,12 +275,12 @@ export function registerInspectCommands(
         if (options.json) {
           console.log(JSON.stringify(report, null, 2));
         } else if (report.findings.length === 0) {
-          console.log(chalk.green('✓ Projeto saudável, nenhum problema encontrado.'));
+          console.log(chalk.green('✓ Healthy project, no issues found.'));
         } else {
           console.log(
             report.healthy
-              ? chalk.yellow('Projeto com avisos:')
-              : chalk.red('Projeto com problemas:')
+              ? chalk.yellow('Project with warnings:')
+              : chalk.red('Project with issues:')
           );
           for (const f of report.findings) {
             const line = `  ${levelPrefix(f.level)} [${f.level}] ${f.scope}: ${f.message}`;
@@ -298,8 +298,8 @@ export function registerInspectCommands(
   // ─── context ───────────────────────────────────────────────────────────────
   program
     .command('context')
-    .description('Reúne o contexto do projeto (config, changes, specs) para o agente')
-    .option('--json', 'Saída em JSON')
+    .description('Gathers the project context (config, changes, specs) for the agent')
+    .option('--json', 'JSON output')
     .action(async (options: { json?: boolean }) => {
       try {
         const root = requireProjectRoot();
