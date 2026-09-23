@@ -82,6 +82,14 @@ export function progressBar(completed: number, total: number, width = 20): strin
   return chalk.green('█'.repeat(filled)) + chalk.dim('░'.repeat(width - filled));
 }
 
+/** Bracketed progress bar, e.g. `[███░░░░░]`. Empty stays `[░░░...]`. */
+export function bracketBar(completed: number, total: number, width = 20): string {
+  const ratio = total > 0 ? completed / total : 0;
+  const filled = Math.round(ratio * width);
+  const inner = chalk.green('█'.repeat(filled)) + chalk.dim('░'.repeat(width - filled));
+  return `${chalk.dim('[')}${inner}${chalk.dim(']')}`;
+}
+
 function pct(completed: number, total: number): string {
   const p = total > 0 ? Math.round((completed / total) * 100) : 0;
   return `${p}%`;
@@ -96,15 +104,18 @@ export function renderDashboard(data: DashboardData): string {
   lines.push('');
   lines.push(chalk.bold('agentic-fy Dashboard'));
   lines.push(rule);
+  lines.push('');
 
-  // Summary with an overall task progress bar.
+  // Summary: one metric per line, labels aligned, with a bracketed task bar.
   const { totals } = data;
-  const bar = progressBar(totals.tasksDone, totals.tasksTotal);
-  lines.push(
-    `Changes: ${totals.changes}  ·  Merged: ${totals.merged}  ·  Specs: ${totals.specs}  ·  ` +
-      `Tasks: ${totals.tasksDone}/${totals.tasksTotal}`
-  );
-  lines.push(`${bar} ${chalk.dim(pct(totals.tasksDone, totals.tasksTotal))}`);
+  const label = (text: string) => `${text}:`.padEnd(9);
+  lines.push(`${chalk.dim(label('Changes'))}${totals.changes}`);
+  lines.push(`${chalk.dim(label('Merged'))}${totals.merged}`);
+  lines.push(`${chalk.dim(label('Specs'))}${totals.specs}`);
+
+  const tasks = `${totals.tasksDone}/${totals.tasksTotal}`;
+  const bar = bracketBar(totals.tasksDone, totals.tasksTotal);
+  lines.push(`${chalk.dim(label('Tasks'))}${tasks}  ${bar} ${chalk.dim(pct(totals.tasksDone, totals.tasksTotal))}`);
 
   if (data.draft.length > 0) {
     lines.push('');
