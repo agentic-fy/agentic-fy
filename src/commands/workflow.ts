@@ -6,6 +6,7 @@ import {
   runPropose,
   runApply,
   runVerify,
+  runMerge,
   runArchive,
   type WorkflowResult,
 } from '../core/workflow.js';
@@ -71,6 +72,19 @@ export function registerWorkflowCommands(
     .action(async (name?: string) => {
       try {
         printResult(await runVerify(name));
+      } catch (error) {
+        failWithError(error);
+        process.exit(1);
+      }
+    });
+
+  program
+    .command('merge [name]')
+    .description('Applies the change spec deltas to the project specs, keeping the change active (early-sync)')
+    .option('--dry-run', 'Preview the spec merge without writing')
+    .action(async (name: string | undefined, options: { dryRun?: boolean }) => {
+      try {
+        printResult(await runMerge(name, process.cwd(), { dryRun: options.dryRun }));
       } catch (error) {
         failWithError(error);
         process.exit(1);

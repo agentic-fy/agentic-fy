@@ -66,7 +66,8 @@ The `mcp.json` merge is non-destructive: if you already have one, agentic-fy onl
 | `propose <name>` | Creates the change and drafts `proposal`, `design`, `tasks`, `specs/` |
 | `apply [name]` | Reads `tasks.md` and reports task progress |
 | `verify [name]` | Checks artifacts and tasks; marks as `verified` |
-| `archive [name]` | Archives the completed change |
+| `merge [name] [--dry-run]` | Applies the change's spec deltas to the project specs, keeping the change active (early-sync) |
+| `archive [name] [--dry-run]` | Applies the spec deltas to the project specs, then archives the change |
 | `list [--specs] [--long] [--json]` | Lists changes (or specs) |
 | `show <name> [--artifact\|--spec] [--json]` | Shows a change, an artifact, or a spec |
 | `validate [name] [--all] [--strict] [--json]` | Validates the artifacts of a change |
@@ -99,7 +100,7 @@ If you chose a tool during `init`, your IDE's `mcp.json` has already been config
 agentic-fy mcp
 ```
 
-It exposes the `explore`, `propose`, `apply`, `verify`, `archive`, `list`, `show`, `validate`, `status`, and `context` tools to any MCP-compatible agent. Per-editor configuration details in [`docs/commands.md`](docs/commands.md#mcp).
+It exposes the `explore`, `propose`, `apply`, `verify`, `merge`, `archive`, `list`, `show`, `validate`, `status`, and `context` tools to any MCP-compatible agent. Per-editor configuration details in [`docs/commands.md`](docs/commands.md#mcp).
 
 ## Development
 

@@ -5,6 +5,26 @@ All notable changes to this project are documented here.
 The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to semantic versioning ([SemVer](https://semver.org/)).
 
+## [0.1.6] - 2026-09-22
+
+Early-sync of specs. A new `merge` command applies a change's spec deltas into
+the project's consolidated specs without archiving the change, so the specs
+(and the context an AI agent reads) stay current while work is in progress.
+
+### Added
+
+- **`merge [name] [--dry-run]`**
+  - Applies the change's `specs/*.delta.yaml` into
+    `agentic-fy/specs/<capability>.md` and keeps the change active (no archive).
+  - Idempotent and fail-loud, reusing the same merge engine as `archive`.
+    `--dry-run` previews the result without writing.
+  - Exposed as an MCP tool (`merge`) alongside the other workflow tools.
+
+### Changed
+
+- The dashboard summary (`view`) now lists one metric per line
+  (`Changes` / `Merged` / `Specs` / `Tasks`) with a bracketed task-progress bar.
+
 ## [0.1.4] - 2026-09-22
 
 Structured spec deltas and consolidated specs. Changes now describe how they
@@ -134,6 +154,7 @@ added in 0.1.4, in a leaner YAML form.)
 - MCP server (`mcp`) exposing the workflow tools via stdio.
 - Base project structure (`agentic-fy.config.yaml` + `agentic-fy/`).
 
+[0.1.5]: #015---2026-09-22
 [0.1.4]: #014---2026-09-22
 [0.1.3]: #013---2026-09-22
 [0.1.2]: #012---2026-09-21

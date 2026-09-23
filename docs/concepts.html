@@ -135,6 +135,9 @@ operations:
       <p>The merge is deterministic and idempotent, and it fails loudly if a delta references a requirement
       that doesn't exist. Preview it without writing anything using
       <code>agentic-fy archive --dry-run</code>.</p>
+      <p>You don't have to wait for archive. <code>agentic-fy merge</code> runs the same merge but
+      <strong>keeps the change active</strong> — an "early-sync" that keeps the consolidated specs (and the
+      context an AI agent reads) current while the change is still in progress.</p>
       <pre><code>changes/&lt;name&gt;/specs/&lt;cap&gt;.delta.yaml  ──►  merge  ──►  specs/&lt;cap&gt;.md
         (how it changes)                                  (what it is now)</code></pre>
 

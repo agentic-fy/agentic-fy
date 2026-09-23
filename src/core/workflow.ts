@@ -143,6 +143,52 @@ export async function runVerify(name: string | undefined, cwd = process.cwd()): 
 
 // ─── archive ─────────────────────────────────────────────────────────────────
 
+// ─── merge (early-sync) ────────────────────────────────────────────────────
+
+/**
+ * Applies a change's spec deltas into the project's consolidated specs WITHOUT
+ * archiving the change. This is the "early-sync": it keeps
+ * `agentic-fy/specs/<capability>.md` current while the change is still in
+ * progress, so the consolidated specs (and the context an AI agent reads)
+ * reflect the latest requirements before the change is archived.
+ *
+ * The merge is idempotent, so running it repeatedly is safe. Use `dryRun` to
+ * preview the result without writing anything.
+ */
+export async function runMerge(
+  name: string | undefined,
+  cwd = process.cwd(),
+  options: { dryRun?: boolean } = {}
+): Promise<WorkflowResult> {
+  const root = requireProjectRoot(cwd);
+  const changeName = await resolveSingleChange(root, name);
+
+  const specResult = await applyChangeSpecs(root, changeName, { dryRun: options.dryRun });
+  const messages: string[] = [];
+
+  if (specResult.empty) {
+    messages.push('No spec deltas to merge.');
+    return { action: 'merge', change: changeName, messages };
+  }
+
+  for (const cap of specResult.applied) {
+    const verb = cap.created ? 'created' : 'updated';
+    messages.push(
+      `Spec "${cap.capability}" ${verb}: ` +
+        `+${cap.counts.added} ~${cap.counts.modified} -${cap.counts.removed}`
+    );
+    for (const w of cap.warnings) messages.push(`  warning: ${w}`);
+  }
+
+  if (options.dryRun) {
+    messages.unshift(`Dry run for "${changeName}" (nothing written).`);
+  } else {
+    messages.push(`Merged "${changeName}" into the project specs (change kept active).`);
+  }
+
+  return { action: 'merge', change: changeName, messages };
+}
+
 export async function runArchive(
   name: string | undefined,
   cwd = process.cwd(),

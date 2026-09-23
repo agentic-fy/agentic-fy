@@ -87,6 +87,14 @@ agentic-fy/
       <code>verified</code> when everything is present and there are no pending tasks; otherwise, it points
       out what's missing.</p>
 
+      <h2>merge</h2>
+      <pre><code>agentic-fy merge [name] [--dry-run]</code></pre>
+      <p>Applies the change's spec deltas (<code>specs/*.delta.yaml</code>) into the project's consolidated
+      specs at <code>agentic-fy/specs/&lt;capability&gt;.md</code>, <strong>keeping the change active</strong>
+      (no archive). This "early-sync" keeps the specs — and the context an AI agent reads — current while
+      the change is still in progress. It uses the same idempotent, fail-loud merge engine as
+      <code>archive</code>. Use <code>--dry-run</code> to preview without writing.</p>
+
       <h2>archive</h2>
       <pre><code>agentic-fy archive [name] [--dry-run]</code></pre>
       <p>Merges the change's spec deltas (<code>specs/*.delta.yaml</code>) into the project's consolidated
@@ -148,8 +156,8 @@ agentic-fy config set &lt;key&gt; &lt;value&gt;</code></pre>
       <pre><code>agentic-fy mcp</code></pre>
       <p>Starts the MCP (Model Context Protocol) server over stdio, exposing the workflow commands as tools
       an AI agent can consume. Registered tools: <code>explore</code>, <code>propose</code>,
-      <code>apply</code>, <code>verify</code>, <code>archive</code>, <code>list</code>, <code>show</code>,
-      <code>validate</code>, <code>status</code>, and <code>context</code>.</p>
+      <code>apply</code>, <code>verify</code>, <code>merge</code>, <code>archive</code>, <code>list</code>,
+      <code>show</code>, <code>validate</code>, <code>status</code>, and <code>context</code>.</p>
 
       <h3>Connect to Kiro</h3>
       <p>The easiest way is to let <code>agentic-fy init --tools kiro</code> configure it for you. To do it

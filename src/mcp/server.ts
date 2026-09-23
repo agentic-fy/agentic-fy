@@ -7,6 +7,7 @@ import {
   runPropose,
   runApply,
   runVerify,
+  runMerge,
   runArchive,
   type WorkflowResult,
 } from '../core/workflow.js';
@@ -121,6 +122,17 @@ export function createMcpServer(): McpServer {
       inputSchema: { name: z.string().optional().describe('Change name (optional)') },
     },
     async ({ name }) => toToolResult(await runArchive(name))
+  );
+
+  server.registerTool(
+    'merge',
+    {
+      title: 'Merge',
+      description:
+        'Applies the change spec deltas into the project specs without archiving (early-sync).',
+      inputSchema: { name: z.string().optional().describe('Change name (optional)') },
+    },
+    async ({ name }) => toToolResult(await runMerge(name))
   );
 
   server.registerTool(
