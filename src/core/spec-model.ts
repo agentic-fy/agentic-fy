@@ -39,6 +39,13 @@ export interface Requirement {
   title: string;
   /** The normative statement (SHALL/MUST ...). */
   statement: string;
+  /**
+   * Optional shell command that PROVES this requirement is met (exit 0 = met).
+   * Evidence is command-only by design: there is no self-declared "manual"
+   * option, so an agent cannot approve a requirement without an executable
+   * proof — a requirement with no command is an honest, visible gap.
+   */
+  verify?: string;
   scenarios: Scenario[];
 }
 
@@ -71,6 +78,9 @@ export function renderSpec(spec: CapabilitySpec): string {
     lines.push('');
     lines.push(`### Requirement: ${req.title} {#${req.id}}`);
     lines.push(req.statement.trim());
+    if (req.verify && req.verify.trim()) {
+      lines.push(`> verify: \`${req.verify.trim()}\``);
+    }
     for (const sc of req.scenarios) {
       lines.push('');
       lines.push('#### Scenario:');
@@ -88,6 +98,8 @@ const REQ_HEADER = /^###\s+Requirement:\s*(.*?)\s*(?:\{#([a-z0-9][a-z0-9-]*)\})?
 const SCENARIO_HEADER = /^####\s+Scenario:/;
 const WHEN_LINE = /^[-*]\s*WHEN\s+(.*)$/i;
 const THEN_LINE = /^[-*]\s*THEN\s+(.*)$/i;
+// Evidence line: `> verify: \`<command>\`` (backticks optional).
+const VERIFY_LINE = /^>\s*verify:\s*`?(.+?)`?\s*$/i;
 
 /** Slugifies a title into a fallback id when a header lacks an explicit `{#id}`. */
 export function slugify(text: string): string {
@@ -163,6 +175,14 @@ export function parseSpec(content: string, fallbackCapability = ''): CapabilityS
       const title = reqMatch[1].trim();
       const id = reqMatch[2]?.trim() || slugify(title);
       current = { id, title, statement: '', scenarios: [] };
+      continue;
+    }
+
+    // Evidence line belongs to the current requirement (before scenarios).
+    const verifyMatch = line.match(VERIFY_LINE);
+    if (verifyMatch && current && !scenario) {
+      flushStatement();
+      current.verify = verifyMatch[1].trim();
       continue;
     }
 

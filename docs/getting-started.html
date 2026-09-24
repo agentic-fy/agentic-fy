@@ -136,11 +136,18 @@ Tasks: 0 completed, 3 pending.
       <p>Implement the tasks and mark them as <code>[x]</code> in <code>tasks.md</code> as you go.</p>
 
       <h3>5. Verify</h3>
+      <p>If your requirements declare a <code>verify</code> command in the spec delta, <code>verify</code>
+      runs them and reports evidence per requirement. A change is only marked <code>verified</code> when the
+      evidence passes and there are no gaps (use <code>--allow-gaps</code> to accept requirements without a
+      command).</p>
       <pre><code>$ agentic-fy verify
 
 [verify] add-dark-mode
 All artifacts present (proposal, design, tasks).
 All tasks marked as completed.
+Evidence: 2/2 requirement(s) proven.
+  ✓ dark-mode-toggle    (npm test -- theme)
+  ✓ persist-preference  (npm test -- persist)
 Status updated to "verified".</code></pre>
 
       <h3>6. Archive</h3>

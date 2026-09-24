@@ -68,10 +68,11 @@ export function registerWorkflowCommands(
 
   program
     .command('verify [name]')
-    .description('Verifies the implementation against the spec')
-    .action(async (name?: string) => {
+    .description('Verifies the implementation against the spec, running each requirement\'s evidence command')
+    .option('--allow-gaps', 'Accept requirements that declare no verify command (gaps)')
+    .action(async (name: string | undefined, options: { allowGaps?: boolean }) => {
       try {
-        printResult(await runVerify(name));
+        printResult(await runVerify(name, process.cwd(), { allowGaps: options.allowGaps }));
       } catch (error) {
         failWithError(error);
         process.exit(1);

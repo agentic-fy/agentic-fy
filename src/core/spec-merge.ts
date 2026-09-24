@@ -48,6 +48,7 @@ function normalizeReq(r: Requirement): Requirement {
     id: r.id,
     title: r.title.trim(),
     statement: r.statement.trim(),
+    ...(r.verify ? { verify: r.verify.trim() } : {}),
     scenarios: r.scenarios.map((s) => ({ when: s.when.trim(), then: s.then.trim() })),
   };
 }
@@ -100,6 +101,7 @@ export function mergeDelta(
     }
     if (op.set?.title) req.title = op.set.title;
     if (op.set?.statement) req.statement = op.set.statement;
+    if (op.set?.verify) req.verify = op.set.verify;
     if (op.removeScenarios?.length) {
       req.scenarios = req.scenarios.filter(
         (s) => !op.removeScenarios!.some((w) => w.trim() === s.when.trim())
@@ -122,6 +124,7 @@ export function mergeDelta(
       id: op.id,
       title: op.title,
       statement: op.statement,
+      ...(op.verify ? { verify: op.verify } : {}),
       scenarios: op.scenarios ?? [],
     };
     const existing = byId.get(op.id);

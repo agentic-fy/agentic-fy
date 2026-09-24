@@ -3,6 +3,7 @@ import chalk from 'chalk';
 
 import { listChangeSummaries, listSpecIds, ChangeSummary } from './inspect.js';
 import { resolveProjectPaths } from './change.js';
+import { evidenceCoverage } from './evidence.js';
 
 /**
  * Dashboard data and rendering (`view`).
@@ -28,6 +29,9 @@ export interface DashboardData {
     specs: number;
     tasksTotal: number;
     tasksDone: number;
+    /** Requirements (across active changes) that declare an evidence command. */
+    evidenceTotal: number;
+    evidenceCovered: number;
   };
 }
 
@@ -47,10 +51,11 @@ function bucketOf(status: string): 'draft' | 'active' | 'done' {
 }
 
 export async function buildDashboard(root: string): Promise<DashboardData> {
-  const [summaries, specs, merged] = await Promise.all([
+  const [summaries, specs, merged, evidence] = await Promise.all([
     listChangeSummaries(root),
     listSpecIds(root),
     countMerged(root),
+    evidenceCoverage(root),
   ]);
 
   const draft: ChangeSummary[] = [];
@@ -71,7 +76,15 @@ export async function buildDashboard(root: string): Promise<DashboardData> {
     active,
     done,
     specs,
-    totals: { changes: summaries.length, merged, specs: specs.length, tasksTotal, tasksDone },
+    totals: {
+      changes: summaries.length,
+      merged,
+      specs: specs.length,
+      tasksTotal,
+      tasksDone,
+      evidenceTotal: evidence.total,
+      evidenceCovered: evidence.passed,
+    },
   };
 }
 
@@ -108,14 +121,18 @@ export function renderDashboard(data: DashboardData): string {
 
   // Summary: one metric per line, labels aligned, with a bracketed task bar.
   const { totals } = data;
-  const label = (text: string) => `${text}:`.padEnd(9);
+  const label = (text: string) => `${text}:`.padEnd(10);
   lines.push(`${chalk.dim(label('Changes'))}${totals.changes}`);
   lines.push(`${chalk.dim(label('Merged'))}${totals.merged}`);
   lines.push(`${chalk.dim(label('Specs'))}${totals.specs}`);
 
   const tasks = `${totals.tasksDone}/${totals.tasksTotal}`;
-  const bar = bracketBar(totals.tasksDone, totals.tasksTotal);
-  lines.push(`${chalk.dim(label('Tasks'))}${tasks}  ${bar} ${chalk.dim(pct(totals.tasksDone, totals.tasksTotal))}`);
+  const taskBar = bracketBar(totals.tasksDone, totals.tasksTotal);
+  lines.push(`${chalk.dim(label('Tasks'))}${tasks}  ${taskBar} ${chalk.dim(pct(totals.tasksDone, totals.tasksTotal))}`);
+
+  const ev = `${totals.evidenceCovered}/${totals.evidenceTotal}`;
+  const evBar = bracketBar(totals.evidenceCovered, totals.evidenceTotal);
+  lines.push(`${chalk.dim(label('Evidence'))}${ev}  ${evBar} ${chalk.dim(pct(totals.evidenceCovered, totals.evidenceTotal))}`);
 
   if (data.draft.length > 0) {
     lines.push('');

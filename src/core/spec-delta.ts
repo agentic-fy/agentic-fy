@@ -32,6 +32,8 @@ const addOpSchema = z.object({
   id: idSchema,
   title: z.string().min(1, 'add.title cannot be empty'),
   statement: z.string().min(1, 'add.statement cannot be empty'),
+  /** Optional shell command that proves the requirement (exit 0 = met). */
+  verify: z.string().min(1).optional(),
   scenarios: z.array(scenarioSchema).default([]),
 });
 
@@ -42,6 +44,8 @@ const modifyOpSchema = z.object({
     .object({
       title: z.string().min(1).optional(),
       statement: z.string().min(1).optional(),
+      /** Set/replace the evidence command. */
+      verify: z.string().min(1).optional(),
     })
     .optional(),
   addScenarios: z.array(scenarioSchema).optional(),
@@ -128,6 +132,9 @@ operations:
     id: example-requirement
     title: Example requirement
     statement: The system SHALL do something observable.
+    # Optional: a shell command that PROVES this requirement (exit 0 = met).
+    # Without it, the requirement shows as an honest gap in "verify"/"view".
+    verify: npm test -- example
     scenarios:
       - when: a user does X
         then: the system does Y
@@ -136,6 +143,7 @@ operations:
   #     id: example-requirement
   #     set:
   #       statement: The system SHALL do something better.
+  #       verify: npm test -- example-better
   #     addScenarios:
   #       - when: a user does Z
   #         then: the system does W

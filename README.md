@@ -65,7 +65,7 @@ The `mcp.json` merge is non-destructive: if you already have one, agentic-fy onl
 | `explore` | Thinking mode: maps the problem and lists active changes |
 | `propose <name>` | Creates the change and drafts `proposal`, `design`, `tasks`, `specs/` |
 | `apply [name]` | Reads `tasks.md` and reports task progress |
-| `verify [name]` | Checks artifacts and tasks; marks as `verified` |
+| `verify [name] [--allow-gaps]` | Checks artifacts and tasks, and runs each requirement's evidence command; marks as `verified` |
 | `merge [name] [--dry-run]` | Applies the change's spec deltas to the project specs, keeping the change active (early-sync) |
 | `archive [name] [--dry-run]` | Applies the spec deltas to the project specs, then archives the change |
 | `list [--specs] [--long] [--json]` | Lists changes (or specs) |

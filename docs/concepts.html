@@ -89,6 +89,7 @@ operations:
     id: user-can-export-data
     title: User can export data
     statement: The system SHALL let users export their data as CSV.
+    verify: npm test -- export     # optional: a command that PROVES this requirement
     scenarios:
       - when: the user clicks Export
         then: a CSV file is downloaded
@@ -107,6 +108,14 @@ operations:
       <p>The structure is validated by a schema: a malformed delta fails loudly (never silently), and
       <code>modify</code> is a partial patch — you never recopy a whole requirement or drop a scenario by
       accident.</p>
+
+      <h2>Evidence</h2>
+      <p>A requirement can carry a <code>verify</code> command that <strong>proves</strong> it — a test, a
+      script, a build, anything that exits 0 when the requirement is met. <code>agentic-fy verify</code>
+      runs those commands and only marks a change <code>verified</code> when they pass. This is the point
+      that sets agentic-fy apart: an agent cannot mark a requirement done just by asserting it — there must
+      be an executable proof. A requirement with no command is an honest, visible gap, never a silent pass.
+      Evidence is command-only by design; there is no self-declared "manual" evidence.</p>
 
       <h3>Enablers, not gates</h3>
       <p>The order of the artifacts shows what becomes <em>possible</em> next, not what you're <em>forced</em>

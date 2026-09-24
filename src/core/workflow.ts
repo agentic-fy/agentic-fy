@@ -17,6 +17,7 @@ import {
 import { CHANGE_ARTIFACTS } from './schema.js';
 import { specDeltaTemplate } from './spec-delta.js';
 import { applyChangeSpecs } from './spec-merge.js';
+import { collectEvidence } from './evidence.js';
 
 /**
  * Pure workflow functions. They are the shared core: both the CLI handlers
@@ -105,7 +106,11 @@ export async function runApply(name: string | undefined, cwd = process.cwd()): P
 
 // ─── verify ──────────────────────────────────────────────────────────────────
 
-export async function runVerify(name: string | undefined, cwd = process.cwd()): Promise<WorkflowResult> {
+export async function runVerify(
+  name: string | undefined,
+  cwd = process.cwd(),
+  options: { allowGaps?: boolean } = {}
+): Promise<WorkflowResult> {
   const root = requireProjectRoot(cwd);
   const changeName = await resolveSingleChange(root, name);
   const change = await readChange(root, changeName);
@@ -130,11 +135,43 @@ export async function runVerify(name: string | undefined, cwd = process.cwd()): 
     messages.push('All tasks marked as completed.');
   }
 
-  const ok = missing.length === 0 && pending.length === 0 && tasks.length > 0;
+  // Evidence: run each requirement's verify command (command-only proof).
+  const evidence = await collectEvidence(root, change.name);
+  const t = evidence.totals;
+  if (t.total > 0) {
+    messages.push(`Evidence: ${t.passed}/${t.total} requirement(s) proven.`);
+    for (const r of evidence.requirements) {
+      if (r.status === 'passed') {
+        messages.push(`  ✓ ${r.id}  (${r.command})`);
+      } else if (r.status === 'failed') {
+        messages.push(`  ✗ ${r.id}  FAILED: ${r.command}${r.detail ? ` — ${r.detail}` : ''}`);
+      } else {
+        messages.push(`  ✗ ${r.id}  NO EVIDENCE — no verify command`);
+      }
+    }
+  } else {
+    messages.push('Evidence: no requirements declared by this change.');
+  }
+
+  const artifactsOk = missing.length === 0 && pending.length === 0 && tasks.length > 0;
+  const evidenceFailed = t.failed > 0;
+  const evidenceGaps = t.gaps > 0;
+  const evidenceOk = !evidenceFailed && (!evidenceGaps || options.allowGaps === true);
+
+  const ok = artifactsOk && evidenceOk;
   if (ok) {
     await setChangeStatus(root, change.name, 'verified');
     messages.push('Status updated to "verified".');
+    if (evidenceGaps && options.allowGaps) {
+      messages.push(`(Accepted ${t.gaps} requirement(s) without evidence via --allow-gaps.)`);
+    }
   } else {
+    if (evidenceFailed) messages.push(`${t.failed} requirement(s) failed their evidence command.`);
+    if (evidenceGaps && !options.allowGaps) {
+      messages.push(
+        `${t.gaps} requirement(s) have no evidence. Add a "verify" command, or pass --allow-gaps to accept them.`
+      );
+    }
     messages.push('Not ready to archive yet; resolve the points above.');
   }
 

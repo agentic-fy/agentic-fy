@@ -81,11 +81,18 @@ agentic-fy/
       you to specify the name.</p>
 
       <h2>verify</h2>
-      <pre><code>agentic-fy verify [name]</code></pre>
-      <p>Checks whether the three artifacts (<code>proposal</code>, <code>design</code>, <code>tasks</code>)
-      exist and whether all tasks in <code>tasks.md</code> are checked. It only marks the change as
-      <code>verified</code> when everything is present and there are no pending tasks; otherwise, it points
-      out what's missing.</p>
+      <pre><code>agentic-fy verify [name] [--allow-gaps]</code></pre>
+      <p>Checks that the artifacts (<code>proposal</code>, <code>design</code>, <code>tasks</code>) exist and
+      that all tasks are checked — and then collects <strong>evidence</strong>. Each requirement can declare
+      a <code>verify</code> command in its spec delta; <code>verify</code> runs those commands (exit 0 =
+      proven) and reports per requirement:</p>
+      <pre><code>Evidence: 2/3 requirement(s) proven.
+  ✓ dark-mode-toggle   (npm test -- theme)
+  ✗ persist-preference FAILED: npm test -- persist — exit 1
+  ✗ os-default-theme   NO EVIDENCE — no verify command</code></pre>
+      <p>The change is only marked <code>verified</code> when nothing fails and there are no gaps. A
+      requirement with no command is an honest gap, not a pass — there is no self-declared "manual" evidence.
+      Use <code>--allow-gaps</code> to accept requirements that declare no command.</p>
 
       <h2>merge</h2>
       <pre><code>agentic-fy merge [name] [--dry-run]</code></pre>
@@ -147,10 +154,10 @@ agentic-fy config set &lt;key&gt; &lt;value&gt;</code></pre>
 
       <h2>view</h2>
       <pre><code>agentic-fy view [--static] [--json]</code></pre>
-      <p>A dashboard of specs and changes, with a summary line
-      (<code>Changes · Merged · Specs · Tasks</code>) and a task-progress bar. In an interactive terminal it
-      opens a number-navigable view; <code>--static</code> prints the panel and exits, and <code>--json</code>
-      returns the raw data.</p>
+      <p>A dashboard of specs and changes, with a summary
+      (<code>Changes · Merged · Specs · Tasks · Evidence</code>) and progress bars for tasks and evidence
+      coverage. In an interactive terminal it opens a number-navigable view; <code>--static</code> prints the
+      panel and exits, and <code>--json</code> returns the raw data.</p>
 
       <h2 id="mcp">mcp</h2>
       <pre><code>agentic-fy mcp</code></pre>

@@ -5,6 +5,28 @@ All notable changes to this project are documented here.
 The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to semantic versioning ([SemVer](https://semver.org/)).
 
+## [0.1.7] - 2026-09-24
+
+Command-based evidence. `verify` no longer just checks that boxes are ticked:
+each requirement can declare a command that proves it, and `verify` runs those
+commands. This is the differentiator — an agent cannot mark a requirement done
+without an executable proof.
+
+### Added
+
+- **Evidence (command-only)**
+  - A requirement can declare a `verify` command in its spec delta
+    (`add.verify` or `modify.set.verify`); it renders in the consolidated spec
+    as `> verify: \`<command>\``.
+  - `verify [name] [--allow-gaps]` consolidates the change's deltas, then runs
+    each requirement's command (exit 0 = proven), with a timeout. It reports
+    per requirement (`proven` / `failed` / `no evidence`) and only marks the
+    change `verified` when nothing fails and there are no gaps — unless
+    `--allow-gaps` is passed. There is no self-declared "manual" evidence: a
+    requirement without a command is an honest, visible gap.
+  - `view` gained an `Evidence: x/y` line with a progress bar in the summary
+    (dashboard-safe: it counts declared commands without executing them).
+
 ## [0.1.6] - 2026-09-22
 
 Early-sync of specs. A new `merge` command applies a change's spec deltas into
@@ -154,7 +176,8 @@ added in 0.1.4, in a leaner YAML form.)
 - MCP server (`mcp`) exposing the workflow tools via stdio.
 - Base project structure (`agentic-fy.config.yaml` + `agentic-fy/`).
 
-[0.1.5]: #015---2026-09-22
+[0.1.7]: #017---2026-09-24
+[0.1.6]: #016---2026-09-22
 [0.1.4]: #014---2026-09-22
 [0.1.3]: #013---2026-09-22
 [0.1.2]: #012---2026-09-21

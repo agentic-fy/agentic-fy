@@ -11,6 +11,7 @@ export * from './core/skills.js';
 export * from './core/spec-model.js';
 export * from './core/spec-delta.js';
 export * from './core/spec-merge.js';
+export * from './core/evidence.js';
 export * from './core/tool-selection.js';
 export * from './core/init.js';
 export * from './core/status.js';
