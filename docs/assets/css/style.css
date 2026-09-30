@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Turret+Road:wght@200;300;400;500;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 
 :root {
   --bg: #0f0a1a;
@@ -15,10 +15,10 @@
   --purple-glow: rgba(168, 85, 247, 0.35);
   --radius: 14px;
   --maxw: 1080px;
-  font-family: "Turret Road", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: "Montserrat", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-body { font-family: "Turret Road", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+body { font-family: "Montserrat", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -89,7 +89,7 @@ header {
   padding: 6px 14px; margin-bottom: 26px; background: var(--surface);
 }
 .hero h1 {
-  font-size: clamp(34px, 6vw, 60px); line-height: 1.08; font-weight: 800; letter-spacing: -0.02em;
+  font-size: clamp(34px, 6vw, 60px); line-height: 1.08; font-weight: 500; letter-spacing: -0.02em;
   background: linear-gradient(180deg, #fff, var(--purple-bright));
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
   max-width: 900px; margin: 0 auto 22px;
@@ -127,13 +127,13 @@ section.block { padding: 56px 0; }
   padding: 22px; transition: border-color .15s, transform .15s;
 }
 .card:hover { border-color: var(--purple); transform: translateY(-2px); }
-.card h3 { font-size: 16px; margin-bottom: 8px; }
+.card h3 { font-size: 16px; font-weight: 500; margin-bottom: 8px; }
 .card p { color: var(--text-faint); font-size: 14px; }
 
 /* Code block */
 .code {
   background: #0b0716; border: 1px solid var(--border); border-radius: 12px;
-  padding: 18px 20px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  padding: 18px 20px; font-family: "Montserrat", ui-sans-serif, system-ui, sans-serif;
   font-size: 14px; color: var(--text); overflow-x: auto; margin-top: 18px;
 }
 .code .c { color: var(--text-faint); }
@@ -145,7 +145,7 @@ section.block { padding: 56px 0; }
   background: linear-gradient(180deg, var(--surface-2), var(--surface));
   border: 1px solid var(--border); border-radius: var(--radius); padding: 20px;
 }
-.step .cmd { color: var(--purple-bright); font-family: ui-monospace, Menlo, monospace; font-size: 14px; font-weight: 600; }
+.step .cmd { color: var(--purple-bright); font-family: "Montserrat", ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 600; }
 .step .desc { color: var(--text-faint); font-size: 13px; margin-top: 8px; }
 .step .num { color: var(--purple-deep); font-weight: 800; font-size: 12px; letter-spacing: .1em; }
 
@@ -166,16 +166,16 @@ footer { border-top: 1px solid var(--border); padding: 40px 0; margin-top: 40px;
 .doc { padding: 56px 0 24px; }
 .doc-head { margin-bottom: 8px; }
 .doc-head .kicker { font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--purple-bright); }
-.doc h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 800; letter-spacing: -0.02em; margin: 10px 0 16px; }
+.doc h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 500; letter-spacing: -0.02em; margin: 10px 0 16px; }
 .doc .subtitle { color: var(--text-dim); font-size: 18px; margin-bottom: 8px; }
 
 .doc-body { padding-bottom: 60px; }
 .doc-body h2 {
-  font-size: 24px; font-weight: 700; margin: 44px 0 14px; padding-top: 12px;
+  font-size: 24px; font-weight: 500; margin: 44px 0 14px; padding-top: 12px;
   border-top: 1px solid var(--border);
 }
 .doc-body h2:first-child { border-top: none; padding-top: 0; margin-top: 12px; }
-.doc-body h3 { font-size: 18px; font-weight: 600; margin: 26px 0 10px; color: var(--text); }
+.doc-body h3 { font-size: 18px; font-weight: 500; margin: 26px 0 10px; color: var(--text); }
 .doc-body p { color: var(--text-dim); margin: 12px 0; }
 .doc-body ul, .doc-body ol { color: var(--text-dim); margin: 12px 0 12px 22px; }
 .doc-body li { margin: 6px 0; }
@@ -184,7 +184,7 @@ footer { border-top: 1px solid var(--border); padding: 40px 0; margin-top: 40px;
 
 .doc-body code {
   background: #0b0716; border: 1px solid var(--border); border-radius: 6px;
-  padding: 2px 7px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; color: var(--purple-bright);
+  padding: 2px 7px; font-family: "Montserrat", ui-sans-serif, system-ui, sans-serif; font-size: 13px; color: var(--purple-bright);
 }
 .doc-body pre {
   background: #0b0716; border: 1px solid var(--border); border-radius: 12px;

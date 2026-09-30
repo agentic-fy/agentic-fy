@@ -17,9 +17,11 @@ const BANNER = [
   "╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚═╝ ╚═════╝ ",
 ];
 
-/** Renders the banner in purple. */
-function renderBanner(): string {
-  return BANNER.map((row) => `${PURPLE}${row}${RESET}`).join("\n");
+/** Renders the banner in purple. Exported so other screens (e.g. the init
+ * prompt) can show the same logo. Pass `color: false` to strip ANSI. */
+export function renderBanner(color = true): string {
+  const rows = BANNER.map((row) => (color ? `${PURPLE}${row}${RESET}` : row));
+  return rows.join("\n");
 }
 
 /**

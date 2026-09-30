@@ -27,6 +27,12 @@ export function registerInitCommand(
         // 1. Select the tools (flag > interactive prompt > none).
         const tools = await selectTools(path.resolve(targetPath), { toolsFlag: options.tools });
 
+        // Cancelled at the prompt (Esc / Ctrl-C): abort without creating anything.
+        if (tools === null) {
+          console.log(chalk.dim('Cancelled. No project was created.'));
+          return;
+        }
+
         // 2. Create the structure and configure the selected tools.
         const result = await initProject(targetPath, tools);
         const rel = (p: string) => path.relative(result.root, p) || '.';
