@@ -19,6 +19,8 @@ export interface DashboardData {
   draft: ChangeSummary[];
   /** Changes in progress (applying). */
   active: ChangeSummary[];
+  /** Changes that ran verify but still have failing/unproven requirements. */
+  converging: ChangeSummary[];
   /** Ready changes (verified). */
   done: ChangeSummary[];
   specs: string[];
@@ -43,9 +45,10 @@ async function countMerged(root: string): Promise<number> {
   return entries.filter((e) => e.isDirectory()).length;
 }
 
-/** Classifies a change's status into one of the panel's three groups. */
-function bucketOf(status: string): 'draft' | 'active' | 'done' {
+/** Classifies a change's status into one of the panel's groups. */
+function bucketOf(status: string): 'draft' | 'active' | 'converging' | 'done' {
   if (status === 'applying') return 'active';
+  if (status === 'converging') return 'converging';
   if (status === 'verified') return 'done';
   return 'draft'; // exploring, proposed (and any other) count as draft
 }
@@ -60,20 +63,22 @@ export async function buildDashboard(root: string): Promise<DashboardData> {
 
   const draft: ChangeSummary[] = [];
   const active: ChangeSummary[] = [];
+  const converging: ChangeSummary[] = [];
   const done: ChangeSummary[] = [];
   let tasksTotal = 0;
   let tasksDone = 0;
 
+  const byBucket = { draft, active, converging, done };
   for (const c of summaries) {
     tasksTotal += c.tasks.total;
     tasksDone += c.tasks.completed;
-    const bucket = bucketOf(c.status);
-    (bucket === 'active' ? active : bucket === 'done' ? done : draft).push(c);
+    byBucket[bucketOf(c.status)].push(c);
   }
 
   return {
     draft,
     active,
+    converging,
     done,
     specs,
     totals: {
@@ -151,6 +156,18 @@ export function renderDashboard(data: DashboardData): string {
       const bar = progressBar(c.tasks.completed, c.tasks.total);
       lines.push(
         `  ${chalk.yellow('◉')} ${c.name.padEnd(28)} ${bar} ${chalk.dim(pct(c.tasks.completed, c.tasks.total))}`
+      );
+    }
+  }
+
+  if (data.converging.length > 0) {
+    lines.push('');
+    lines.push(chalk.bold.yellow('Converging (verify failed — fix & re-verify)'));
+    lines.push(sub);
+    for (const c of data.converging) {
+      const bar = progressBar(c.tasks.completed, c.tasks.total);
+      lines.push(
+        `  ${chalk.yellow('↻')} ${c.name.padEnd(28)} ${bar} ${chalk.dim(pct(c.tasks.completed, c.tasks.total))}`
       );
     }
   }

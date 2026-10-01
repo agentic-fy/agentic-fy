@@ -144,15 +144,23 @@ export async function runVerify(
       if (r.status === 'passed') {
         messages.push(`  ✓ ${r.id}  (${r.command})`);
       } else if (r.status === 'failed') {
-        messages.push(`  ✗ ${r.id}  FAILED: ${r.command}${r.detail ? ` — ${r.detail}` : ''}`);
+        // Each unmet requirement names the next action, so the loop is actionable.
+        messages.push(
+          `  ✗ ${r.id}  FAILED: ${r.command}${r.detail ? ` — ${r.detail}` : ''}` +
+            `  → fix the implementation, then run verify again`
+        );
       } else {
-        messages.push(`  ✗ ${r.id}  NO EVIDENCE — no verify command`);
+        messages.push(
+          `  ✗ ${r.id}  NO EVIDENCE  → add a "verify" command, or accept with --allow-gaps`
+        );
       }
     }
   } else {
     messages.push('Evidence: no requirements declared by this change.');
   }
 
+  // Collect the per-artifact / per-task next actions too, so "what's left" is
+  // one coherent plan rather than scattered lines.
   const artifactsOk = missing.length === 0 && pending.length === 0 && tasks.length > 0;
   const evidenceFailed = t.failed > 0;
   const evidenceGaps = t.gaps > 0;
@@ -166,16 +174,26 @@ export async function runVerify(
       messages.push(`(Accepted ${t.gaps} requirement(s) without evidence via --allow-gaps.)`);
     }
   } else {
-    if (evidenceFailed) messages.push(`${t.failed} requirement(s) failed their evidence command.`);
-    if (evidenceGaps && !options.allowGaps) {
-      messages.push(
-        `${t.gaps} requirement(s) have no evidence. Add a "verify" command, or pass --allow-gaps to accept them.`
-      );
-    }
-    messages.push('Not ready to archive yet; resolve the points above.');
+    // Not converged: persist the `converging` state and summarize what remains.
+    await setChangeStatus(root, change.name, 'converging');
+
+    const parts: string[] = [];
+    if (missing.length > 0) parts.push(`${missing.length} missing artifact(s)`);
+    if (pending.length > 0) parts.push(`${pending.length} pending task(s)`);
+    if (evidenceFailed) parts.push(`${t.failed} failed evidence`);
+    if (evidenceGaps && !options.allowGaps) parts.push(`${t.gaps} without evidence`);
+
+    messages.push('');
+    messages.push(`Converging — not ready yet: ${parts.join(', ')}.`);
+    messages.push('Resolve the items above and run "agentic-fy verify" again.');
   }
 
-  return { action: 'verify', change: change.name, status: ok ? 'verified' : change.metadata.status, messages };
+  return {
+    action: 'verify',
+    change: change.name,
+    status: ok ? 'verified' : 'converging',
+    messages,
+  };
 }
 
 // ─── archive ─────────────────────────────────────────────────────────────────

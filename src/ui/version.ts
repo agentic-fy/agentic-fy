@@ -54,7 +54,7 @@ export function renderVersion(program: Command, version: string): string {
   const dim = (s: string) => (noColor ? s : `\x1b[2m${s}\x1b[0m`);
   const strip = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, '');
 
-  const label = renderLabel(`ATENTIC FY - V${version}`);
+  const label = renderLabel(`AGENTIC-FY - V${version}`);
   const header = noColor ? strip(logo) : logo;
   const labelBlock = noColor ? strip(label) : label;
 

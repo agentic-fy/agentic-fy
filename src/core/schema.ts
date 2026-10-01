@@ -3,11 +3,15 @@ import { z } from 'zod';
 /**
  * Possible statuses of a change throughout the workflow
  * explore -> propose -> apply -> verify -> archive.
+ *
+ * `converging` is set when `verify` ran but evidence failed or had gaps: the
+ * change is in the verify -> fix -> verify loop until everything is proven.
  */
 export const CHANGE_STATUSES = [
   'exploring',
   'proposed',
   'applying',
+  'converging',
   'verified',
   'archived',
 ] as const;

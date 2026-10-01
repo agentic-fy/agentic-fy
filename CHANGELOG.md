@@ -5,6 +5,24 @@ All notable changes to this project are documented here.
 The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to semantic versioning ([SemVer](https://semver.org/)).
 
+## [0.1.9] - 2026-09-30
+
+Convergence loop. `verify` now closes the loop: when evidence fails or a
+requirement has no proof, the change enters a `converging` state and `verify`
+reports an actionable plan (what to fix for each requirement) instead of a flat
+pass/fail.
+
+### Added
+
+- **`converging` state** — a change that ran `verify` but still has failing or
+  unproven requirements is persisted as `converging` (visible in `status`,
+  `list`, and a dedicated section in `view`), rather than silently staying
+  `applying`.
+- **Convergence plan in `verify`** — each unmet requirement names its next
+  action (`→ fix the implementation` / `→ add a verify command`), followed by a
+  one-line summary of what remains. The loop is: verify → fix → verify, until
+  everything is proven (then `verified`).
+
 ## [0.1.8] - 2026-09-30
 
 ### Added
@@ -200,6 +218,7 @@ added in 0.1.4, in a leaner YAML form.)
 - MCP server (`mcp`) exposing the workflow tools via stdio.
 - Base project structure (`agentic-fy.config.yaml` + `agentic-fy/`).
 
+[0.1.9]: #019---2026-09-30
 [0.1.8]: #018---2026-09-30
 [0.1.7]: #017---2026-09-24
 [0.1.6]: #016---2026-09-22
