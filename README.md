@@ -1,6 +1,13 @@
-# agentic-fy
+##  Agentic-Fy
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@agentic-fy/agentic-fy"><img alt="npm version" src="https://img.shields.io/npm/v/@agentic-fy/agentic-fy?style=flat-square" /></a>
+  <a href="./LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" /></a>
+</p>
 
 A performant, lean TypeScript CLI for **spec-driven** workflows, with **MCP** support.
+
+
 
 agentic-fy structures the spec-driven development cycle — from draft to archive — and exposes that flow both in the terminal and as an MCP server, so an AI agent can drive the work inside your IDE.
 
@@ -17,7 +24,7 @@ agentic-fy structures the spec-driven development cycle — from draft to archiv
 ## Installation
 
 ```bash
-npm install -g agentic-fy
+npm install -g @agentic-fy/agentic-fy
 ```
 
 Or run without installing:
