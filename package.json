@@ -1,8 +1,16 @@
 {
   "name": "@agentic-fy/agentic-fy",
   "version": "0.2.0",
-  "description": "CLI TypeScript performático e enxuto para workflow spec-driven, com suporte a MCP",
+  "description": "A lean, performant TypeScript CLI for spec-driven workflows, with MCP support.",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agentic-fy/agentic-fy.git"
+  },
+  "homepage": "https://github.com/agentic-fy/agentic-fy#readme",
+  "bugs": {
+    "url": "https://github.com/agentic-fy/agentic-fy/issues"
+  },
   "publishConfig": {
     "access": "public"
   },
