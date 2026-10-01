@@ -54,7 +54,11 @@ a:hover { text-decoration: underline; }
 .wrap {
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 0 24px;
+  /* Padding lateral com piso garantido: nunca menor que 5px, respeitando a
+     safe-area (notch). Assim o conteúdo nunca cola na borda em nenhuma
+     largura, mesmo entre breakpoints. */
+  padding-left: max(24px, env(safe-area-inset-left), 5px);
+  padding-right: max(24px, env(safe-area-inset-right), 5px);
   /* Never let the container itself exceed the viewport. */
   width: 100%;
 }
@@ -98,7 +102,7 @@ header {
 .nav-links a:hover { color: var(--text); text-decoration: none; }
 .nav-links a.active { color: var(--purple-bright); }
 
-/* GitHub icon link */
+/* Icon links (npm, GitHub) */
 .nav-links a.icon-link { display: inline-flex; align-items: center; }
 .nav-links a.icon-link svg { width: 22px; height: 22px; display: block; fill: currentColor; }
 .nav-links a.icon-link:hover { color: var(--purple-bright); }
@@ -247,7 +251,11 @@ footer { border-top: 1px solid var(--border); padding: 40px 0; margin-top: 40px;
 
 /* Tablet and below */
 @media (max-width: 860px) {
-  .wrap { padding: 0 20px; }
+  /* Mantém o piso de 5px (e a safe-area) também no tablet. */
+  .wrap {
+    padding-left: max(20px, env(safe-area-inset-left), 5px);
+    padding-right: max(20px, env(safe-area-inset-right), 5px);
+  }
 
   /* Collapse the nav into a hamburger-driven dropdown. */
   .nav { height: 60px; }
@@ -296,7 +304,7 @@ footer { border-top: 1px solid var(--border); padding: 40px 0; margin-top: 40px;
   }
   img, canvas, svg, table, pre { max-width: 100%; }
 
-  .hero { padding: 48px 0 40px; }
+  
   .hero-logo { width: 96px; height: 96px; margin-bottom: 18px; }
   .eyebrow { margin-bottom: 20px; }
 
@@ -304,7 +312,7 @@ footer { border-top: 1px solid var(--border); padding: 40px 0; margin-top: 40px;
   .cta-row { flex-direction: column; align-items: stretch; }
   .btn { justify-content: center; width: 100%; padding: 13px 18px; }
 
-  section.block { padding: 36px 0; }
+  section.block { padding: 0 20px 0 20px; }
   .synopsis { padding: 20px; }
 
   .grid, .flow { grid-template-columns: 1fr; }

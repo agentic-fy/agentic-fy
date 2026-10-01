@@ -1,7 +1,7 @@
 import { promises as fs, existsSync } from 'fs';
 import path from 'path';
 
-import { AiTool } from './tools.js';
+import { AiTool, McpFormat } from './tools.js';
 
 /**
  * Per-tool MCP configuration generation/merge.
@@ -28,15 +28,39 @@ export interface ToolSetupResult {
   outcome: ToolSetupOutcome;
 }
 
-/** The agentic-fy MCP server definition that we write into the config. */
-function agenticServerEntry(): Record<string, unknown> {
-  return {
-    command: 'npx',
-    args: ['-y', 'agentic-fy', 'mcp'],
+/** npm package that provides the `agentic-fy mcp` server. */
+const MCP_PACKAGE = '@agentic-fy/agentic-fy';
+
+/** The command that starts the MCP server, shared by every format. */
+const MCP_ARGV = ['npx', '-y', MCP_PACKAGE, 'mcp'] as const;
+
+/**
+ * A builder per MCP entry format. Each returns the server-entry object in the
+ * exact shape that format expects. Keyed by `McpFormat`, so adding a new format
+ * to the type forces adding its builder here (exhaustive by construction).
+ *
+ *  - 'standard': `{ command, args, disabled, autoApprove }` (Kiro, Cursor,
+ *    Copilot, Claude, Windsurf).
+ *  - 'opencode': `{ type: 'local', command: [...], enabled }` (OpenCode).
+ */
+const ENTRY_BUILDERS: Record<McpFormat, () => Record<string, unknown>> = {
+  standard: () => ({
+    command: MCP_ARGV[0],
+    args: [...MCP_ARGV.slice(1)],
     disabled: false,
     // Read tools can run without confirmation; write ones cannot.
     autoApprove: ['explore', 'list', 'show', 'validate'],
-  };
+  }),
+  opencode: () => ({
+    type: 'local',
+    command: [...MCP_ARGV],
+    enabled: true,
+  }),
+};
+
+/** The agentic-fy MCP server definition, in the shape the tool expects. */
+function agenticServerEntry(format: McpFormat): Record<string, unknown> {
+  return ENTRY_BUILDERS[format]();
 }
 
 /** Compares two server entries stably (key order). */
@@ -69,14 +93,19 @@ export async function setupTool(root: string, tool: AiTool): Promise<ToolSetupRe
     }
   }
 
+  const format = tool.mcpFormat ?? 'standard';
   const rootKey = tool.rootKey;
   const servers =
     config[rootKey] && typeof config[rootKey] === 'object' && !Array.isArray(config[rootKey])
       ? (config[rootKey] as Record<string, unknown>)
       : {};
 
-  const desired = agenticServerEntry();
+  const desired = agenticServerEntry(format);
   const current = servers[MCP_SERVER_NAME];
+
+  // For OpenCode, add the config `$schema` on a fresh file (matches its docs).
+  const wantsSchema =
+    format === 'opencode' && !existed && config['$schema'] === undefined;
 
   if (existed && current !== undefined && sameEntry(current, desired)) {
     return { tool, file, outcome: 'unchanged' };
@@ -84,6 +113,10 @@ export async function setupTool(root: string, tool: AiTool): Promise<ToolSetupRe
 
   servers[MCP_SERVER_NAME] = desired;
   config[rootKey] = servers;
+  if (wantsSchema) {
+    // Put $schema first for readability by rebuilding the object.
+    config = { $schema: 'https://opencode.ai/config.json', ...config };
+  }
 
   await fs.mkdir(path.dirname(file), { recursive: true });
   await fs.writeFile(file, JSON.stringify(config, null, 2) + '\n', 'utf8');

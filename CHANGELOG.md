@@ -5,6 +5,30 @@ All notable changes to this project are documented here.
 The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to semantic versioning ([SemVer](https://semver.org/)).
 
+## [0.1.8] - 2026-09-30
+
+### Added
+
+- **OpenCode support** — `init --tools opencode` now configures OpenCode. It
+  writes `opencode.json` using OpenCode's own MCP shape (the `mcp` key with a
+  `{ "type": "local", "command": ["npx", "-y", "@agentic-fy/agentic-fy", "mcp"] }`
+  entry and a `$schema`), and generates the slash commands / skills under
+  `.opencode`.
+- **Kimi Code support** — `init --tools kimi` now configures Kimi Code. It writes
+  the project-level `.kimi-code/mcp.json` (standard `mcpServers` shape) and
+  generates the slash commands / skills under `.kimi-code`.
+
+### Changed
+
+- MCP entry generation now uses a per-format builder map (`standard` /
+  `opencode`), typed by `McpFormat`, so adding a tool with a new config shape is
+  a single map entry.
+
+### Fixed
+
+- The generated MCP config now points to the correct package name
+  (`@agentic-fy/agentic-fy`) instead of the unscoped `agentic-fy`.
+
 ## [0.1.7] - 2026-09-24
 
 Command-based evidence. `verify` no longer just checks that boxes are ticked:
@@ -176,6 +200,7 @@ added in 0.1.4, in a leaner YAML form.)
 - MCP server (`mcp`) exposing the workflow tools via stdio.
 - Base project structure (`agentic-fy.config.yaml` + `agentic-fy/`).
 
+[0.1.8]: #018---2026-09-30
 [0.1.7]: #017---2026-09-24
 [0.1.6]: #016---2026-09-22
 [0.1.4]: #014---2026-09-22

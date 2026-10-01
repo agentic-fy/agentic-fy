@@ -18,8 +18,17 @@ import path from 'path';
  */
 
 /** Root key of the MCP config JSON: most use `mcpServers`; the VS Code
- * (Copilot) default uses `servers`. */
-export type McpRootKey = 'mcpServers' | 'servers';
+ * (Copilot) default uses `servers`; OpenCode uses `mcp`. */
+export type McpRootKey = 'mcpServers' | 'servers' | 'mcp';
+
+/**
+ * Shape of a single MCP server entry:
+ *  - 'standard': `{ command: "npx", args: [...], disabled, autoApprove }` — the
+ *    common Kiro/Cursor/Copilot/Claude/Windsurf shape.
+ *  - 'opencode': `{ type: "local", command: ["npx", ...], enabled }` — OpenCode's
+ *    own shape (command is a single array; different keys).
+ */
+export type McpFormat = 'standard' | 'opencode';
 
 /**
  * How a tool spells a generated command:
@@ -39,6 +48,8 @@ export interface AiTool {
   mcpConfigPath: string;
   /** Root key where the MCP servers are declared. */
   rootKey: McpRootKey;
+  /** Shape of the server entry. Defaults to 'standard' when omitted. */
+  mcpFormat?: McpFormat;
   /**
    * Paths (relative to the root) whose existence indicates the tool is already
    * used in the project — enables pre-selection in the prompt, like in /base.
@@ -104,6 +115,30 @@ export const AI_TOOLS: readonly AiTool[] = [
     detectionPaths: ['.windsurf'],
     skillsDir: '.windsurf',
     commandStyle: 'namespaced',
+  },
+  {
+    id: 'kimi',
+    name: 'Kimi Code',
+    // Kimi reads a project-level config at .kimi-code/mcp.json (standard
+    // `mcpServers` shape). It also supports a global ~/.kimi-code/mcp.json, but
+    // we write the per-project file to keep the integration scoped to the repo.
+    mcpConfigPath: path.join('.kimi-code', 'mcp.json'),
+    rootKey: 'mcpServers',
+    detectionPaths: ['.kimi-code'],
+    skillsDir: '.kimi-code',
+    commandStyle: 'flat',
+  },
+  {
+    id: 'opencode',
+    name: 'OpenCode',
+    // OpenCode reads its config from opencode.json at the project root, under
+    // the `mcp` key, with a local-server shape (type + command array).
+    mcpConfigPath: 'opencode.json',
+    rootKey: 'mcp',
+    mcpFormat: 'opencode',
+    detectionPaths: ['opencode.json', 'opencode.jsonc', '.opencode'],
+    skillsDir: '.opencode',
+    commandStyle: 'flat',
   },
 ] as const;
 
