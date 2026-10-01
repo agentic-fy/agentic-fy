@@ -20,7 +20,7 @@ agentic-fy/changes/add-dark-mode/
 └── .agentic-fy.yaml       # metadata: nome, status, datas
 ```
 
-O nome que você passa é normalizado para um slug seguro em disco: `"Add Dark Mode"` vira `add-dark-mode`.
+O nome que você passa é normalizado para um slug seguro em disco: `"SideBar Menu Mode"` vira `add-dark-mode`.
 
 ## Artefatos
 
