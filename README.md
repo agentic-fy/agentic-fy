@@ -80,6 +80,7 @@ The config merge is non-destructive and idempotent: an existing `mcp.json` keeps
 | Windsurf | `.windsurf/mcp.json` | `/agentic-fy:<cmd>` |
 | OpenCode | `opencode.json` (`mcp` key) | `/agentic-fy-<cmd>` |
 | Kimi Code | `.kimi-code/mcp.json` | `/agentic-fy-<cmd>` |
+| Zed | `.zed/settings.json` (`context_servers` key) | `/agentic-fy-<cmd>` |
 
 Any other MCP-compatible client can connect manually to `agentic-fy mcp`.
 

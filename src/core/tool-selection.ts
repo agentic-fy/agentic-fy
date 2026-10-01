@@ -134,7 +134,7 @@ async function promptInteractive(preselected: AiTool[]): Promise<AiTool[] | null
     out.write('\n');
     out.write(renderBanner(!noColor()) + '\n');
     out.write('\n');
-    out.write(bold('Configure MCP integrations') + '\n');
+    out.write(bold('Select AI tools to integrate') + '\n');
     out.write('\n');
   };
 

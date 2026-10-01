@@ -18,8 +18,9 @@ import path from 'path';
  */
 
 /** Root key of the MCP config JSON: most use `mcpServers`; the VS Code
- * (Copilot) default uses `servers`; OpenCode uses `mcp`. */
-export type McpRootKey = 'mcpServers' | 'servers' | 'mcp';
+ * (Copilot) default uses `servers`; OpenCode uses `mcp`; Zed uses
+ * `context_servers`. */
+export type McpRootKey = 'mcpServers' | 'servers' | 'mcp' | 'context_servers';
 
 /**
  * Shape of a single MCP server entry:
@@ -126,6 +127,17 @@ export const AI_TOOLS: readonly AiTool[] = [
     rootKey: 'mcpServers',
     detectionPaths: ['.kimi-code'],
     skillsDir: '.kimi-code',
+    commandStyle: 'flat',
+  },
+  {
+    id: 'zed',
+    name: 'Zed',
+    // Zed reads project settings from .zed/settings.json, under `context_servers`
+    // (not `mcpServers`). A local server is the standard { command, args } shape.
+    mcpConfigPath: path.join('.zed', 'settings.json'),
+    rootKey: 'context_servers',
+    detectionPaths: ['.zed'],
+    skillsDir: '.zed',
     commandStyle: 'flat',
   },
   {

@@ -35,6 +35,9 @@ pass/fail.
 - **Kimi Code support** — `init --tools kimi` now configures Kimi Code. It writes
   the project-level `.kimi-code/mcp.json` (standard `mcpServers` shape) and
   generates the slash commands / skills under `.kimi-code`.
+- **Zed support** — `init --tools zed` now configures Zed. It writes
+  `.zed/settings.json` using Zed's `context_servers` key (standard
+  `{ command, args }` shape) and generates the slash commands / skills under `.zed`.
 
 ### Changed
 
