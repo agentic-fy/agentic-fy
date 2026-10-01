@@ -74,7 +74,7 @@ header {
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .04em; color: var(--text); }
 .brand:hover { text-decoration: none; }
 .logo-badge {
-  width: 34px; height: 34px; border-radius: 8px;
+  width: 60px; height: 60px; border-radius: 8px;
   object-fit: contain; display: block;
 }
 .nav-links { display: flex; gap: 22px; align-items: center; }
@@ -110,7 +110,7 @@ header {
 /* Hero */
 .hero { text-align: center; padding: 96px 0 64px; }
 .hero-logo {
-  width: 160px; height: 160px; margin: 0 auto 28px; display: block;
+  width: 300px; margin: 0 auto 28px; display: block;
   object-fit: contain;  border-radius: 20px; padding: 10px;
 }
 .eyebrow {
@@ -125,6 +125,33 @@ header {
   max-width: 900px; margin: 0 auto 22px;
 }
 .hero p.lead { color: var(--text-dim); font-size: clamp(16px, 2.2vw, 20px); max-width: 680px; margin: 0 auto 34px; }
+
+/* Typewriter headline: blinking caret + stable height so the layout
+   doesn't jump while the text is typed/erased. */
+.typewriter { min-height: 1.2em; }
+/* Keep the white→purple gradient on the TYPED text (not the whole h1), so it
+   repaints correctly as textContent changes and the span is never invisible. */
+.typewriter .tw-text {
+  background: linear-gradient(180deg, #fff, var(--purple-bright));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.tw-cursor {
+  display: inline-block;
+  margin-left: 2px;
+  font-weight: 400;
+  color: var(--purple-bright);
+  -webkit-text-fill-color: var(--purple-bright); /* defeat the h1 gradient clip */
+  /* !important so the blink survives the global reduced-motion reset below.
+     A blinking caret is standard UI, not disruptive motion. */
+  animation: tw-blink 1s step-end infinite !important;
+}
+@keyframes tw-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
 .cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
 .btn {
   display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px;
@@ -275,7 +302,7 @@ footer { border-top: 1px solid var(--border); padding: 40px 0; margin-top: 40px;
   .nav-links a.icon-link { padding: 12px 20px; }
 
   .hero { padding: 64px 0 48px; }
-  .hero-logo { width: 120px; height: 120px; margin-bottom: 22px; }
+  .hero-logo { width: 200px; margin-bottom: 22px; }
 
   section.block { padding: 44px 0; }
   .doc { padding: 40px 0 20px; }
@@ -305,7 +332,7 @@ footer { border-top: 1px solid var(--border); padding: 40px 0; margin-top: 40px;
   img, canvas, svg, table, pre { max-width: 100%; }
 
   
-  .hero-logo { width: 96px; height: 96px; margin-bottom: 18px; }
+  .hero-logo { width: 200px; height: 96px; margin-bottom: 18px; }
   .eyebrow { margin-bottom: 20px; }
 
   /* Full-width, comfortably tappable CTAs. */

@@ -5,7 +5,6 @@ import chalk from 'chalk';
 import { initProject } from '../core/init.js';
 import { selectTools } from '../core/tool-selection.js';
 import { ALL_TOOL_IDS } from '../core/tools.js';
-import { renderBanner } from '../ui/version.js';
 
 /**
  * Registers the `init` command, which creates the base project structure
@@ -25,12 +24,9 @@ export function registerInitCommand(
     )
     .action(async (targetPath = '.', options: { tools?: string }) => {
       try {
-        // Banner no topo, como o --version e as demais telas. Respeita --no-color.
-        const noColor = process.env.NO_COLOR === '1' || process.env.NO_COLOR === 'true';
-        console.log(renderBanner(!noColor));
-        console.log();
-
         // 1. Select the tools (flag > interactive prompt > none).
+        //    The interactive prompt renders its own banner/header; we don't
+        //    print one here to avoid showing the logo twice.
         const tools = await selectTools(path.resolve(targetPath), { toolsFlag: options.tools });
 
         // Cancelled at the prompt (Esc / Ctrl-C): abort without creating anything.

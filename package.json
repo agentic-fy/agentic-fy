@@ -1,6 +1,6 @@
 {
   "name": "@agentic-fy/agentic-fy",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A lean, performant TypeScript CLI for spec-driven workflows, with MCP support.",
   "type": "module",
   "repository": {

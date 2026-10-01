@@ -13,7 +13,7 @@
     <div class="wrap nav">
       <a class="brand" href="index.html">
         <img class="logo-badge" src="assets/img/logo.png" alt="agentic-fy logo" />
-        <span>AGENTIC-FY</span>
+        
       </a>
       <button class="nav-toggle" type="button" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-links">
         <span class="bars"></span>
@@ -35,9 +35,12 @@
   <main>
     <!-- Hero -->
     <section class="hero wrap">
-      <img class="hero-logo" src="assets/img/logo.png" alt="agentic-fy logo" />
+      <img class="hero-logo" src="assets/img/hero-logo.png" alt="agentic-fy logo" />
       <span class="eyebrow">Lightweight spec framework</span>
-      <h1>Build the right thing, and build it right</h1>
+      <h1 class="typewriter">
+        <!-- First phrase is static so it shows instantly and without JS (SEO/a11y). -->
+        <span class="tw-text">Build the right thing, and build it right.</span><span class="tw-cursor" aria-hidden="true">│</span>
+      </h1>
       <p class="lead">
         agentic-fy is a lightweight and configurable framework for creating and managing
         software specifications, keeping you and your coding agents aligned as the work
@@ -167,5 +170,6 @@
 
   <script src="assets/js/neural-bg.js" defer></script>
   <script src="assets/js/nav.js" defer></script>
+  <script src="assets/js/typewriter.js" defer></script>
 </body>
 </html>
