@@ -312,7 +312,7 @@ footer { border-top: 1px solid var(--border); padding: 40px 0; margin-top: 40px;
   .cta-row { flex-direction: column; align-items: stretch; }
   .btn { justify-content: center; width: 100%; padding: 13px 18px; }
 
-  section.block { padding: 0 20px 0 20px; }
+  section.block { padding: 20px 20px 20px 20px; }
   .synopsis { padding: 20px; }
 
   .grid, .flow { grid-template-columns: 1fr; }
