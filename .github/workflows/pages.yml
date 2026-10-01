@@ -1,10 +1,10 @@
 name: Deploy site
 
 # Publishes the static docs/ site to Cloudflare Pages (project: agentic-fy).
-# Runs on pushes to main that touch the site, and can be triggered manually.
+# Runs on pushes to master that touch the site, and can be triggered manually.
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'docs/**'
       - '.github/workflows/pages.yml'
