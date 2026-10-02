@@ -1,84 +1,84 @@
-# Conceitos essenciais
+# Core concepts
 
-**O agentic-fy é uma camada leve de acordo entre você e sua IA.** Você escreve o que uma mudança deve fazer, a IA rascunha os detalhes, vocês dois olham para o mesmo plano, e só então o código é escrito. Esta página é o modelo mental inteiro numa tela. Para a versão longa, veja [Conceitos](concepts.md).
+**agentic-fy is a lightweight layer of agreement between you and your AI.** You write what a change should do, the AI drafts the details, you both look at the same plan, and only then is the code written. This page is the whole mental model on one screen. For the long version, see [Concepts](concepts.md).
 
-A ideia toda em quatro palavras: **concorde primeiro, construa depois.**
+The whole idea in four words: **agree first, build second.**
 
-## As quatro ideias
+## The four ideas
 
-Tudo no agentic-fy é construído a partir de quatro conceitos. Aprenda estes e o resto é detalhe.
+Everything in agentic-fy is built from four concepts. Learn these and the rest is detail.
 
-**1. Uma change é uma unidade de trabalho.** Quando você quer adicionar, modificar ou remover comportamento, cria uma change: uma pasta em `agentic-fy/changes/` que guarda tudo sobre aquele trabalho num só lugar — proposta, design, lista de tarefas e specs. Uma change, uma pasta, uma feature.
+**1. A change is a unit of work.** When you want to add, modify, or remove behavior, you create a change: a folder under `agentic-fy/changes/` that keeps everything about that work in one place — proposal, design, task list, and the spec delta. One change, one folder, one feature.
 
-**2. Os artefatos se apoiam uns nos outros.** Uma change contém alguns documentos, criados numa ordem natural, cada um alimentando o próximo:
+**2. The artifacts build on each other.** A change contains a few documents, created in a natural order, each feeding the next:
 
 ```text
-proposal ──► specs ──► design ──► tasks ──► implementar
-  por quê     o quê      como      passos      fazer
+proposal ──► specs ──► design ──► tasks ──► implement
+   why        what      how       steps       do
 ```
 
-Você pode revisitar qualquer um deles a qualquer momento. Eles são facilitadores, não portões. (Mais sobre isso abaixo.)
+You can revisit any of them at any time. They're enablers, not gates. (More on that below.)
 
-**3. O status acompanha o ciclo de vida.** Cada change tem um status que percorre o workflow: `exploring → proposed → applying → verified → archived`. Os comandos avançam esse status conforme você progride.
+**3. Status tracks the lifecycle.** Each change has a status that moves through the workflow: `exploring → proposed → applying → converging → verified → archived`. The commands advance this status as you go.
 
-**4. Arquivar fecha o ciclo.** Quando o trabalho termina, você arquiva a change. A pasta dela vai para `agentic-fy/changes/archive/`, preservando o histórico. Agora você está pronto para a próxima change.
+**4. Archiving closes the loop.** When the work is done, you archive the change. Its folder moves to `agentic-fy/changes/archive/`, preserving the history. Now you're ready for the next change.
 
-## A estrutura
+## The structure
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│                        agentic-fy/                             │
-│                                                             │
-│   ┌──────────────────┐      ┌──────────────────────────┐   │
-│   │      specs/      │      │        changes/          │   │
-│   │                  │      │                          │   │
-│   │ specs do projeto │      │ uma pasta por change     │   │
-│   │                  │      │ proposal · design ·      │   │
-│   │                  │      │ tasks · specs · archive/ │   │
-│   └──────────────────┘      └──────────────────────────┘   │
-│                                                             │
+│                        agentic-fy/                           │
+│                                                              │
+│   ┌──────────────────┐      ┌──────────────────────────┐    │
+│   │      specs/      │      │        changes/          │    │
+│   │                  │      │                          │    │
+│   │  project specs   │      │  one folder per change   │    │
+│   │                  │      │  proposal · design ·     │    │
+│   │                  │      │  tasks · specs · archive/│    │
+│   └──────────────────┘      └──────────────────────────┘    │
+│                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-Duas pastas. `specs/` guarda specs de projeto; `changes/` é o que você está propondo e construindo. Arquivar move uma change concluída para `changes/archive/`.
+Two folders. `specs/` holds project specs; `changes/` is what you're proposing and building. Archiving moves a finished change into `changes/archive/`.
 
-## O loop que você vai rodar
+## The loop you'll run
 
-No dia a dia, seu fluxo é assim. Opcionalmente pense primeiro; então um comando rascunha o plano, você lê, o próximo acompanha a construção, e o último arquiva.
+Day to day, your flow looks like this. Optionally think first; then one command drafts the plan, you review it, the next tracks the build, and the last archives it.
 
 ```text
-agentic-fy explore                   →  (opcional) pense junto com a IA primeiro
-agentic-fy propose add-dark-mode     →  rascunha proposal, specs, design, tasks
-        (você lê e ajusta o plano)
-agentic-fy apply                     →  acompanha as tarefas a implementar
-agentic-fy verify                    →  confere artefatos e tarefas concluídas
-agentic-fy archive                   →  change arquivada
+agentic-fy explore add-dark-mode     →  (optional) start it in "exploring" and think with the AI
+agentic-fy propose add-dark-mode     →  drafts proposal, specs, design, tasks
+        (you read and adjust the plan)
+agentic-fy apply                     →  tracks the tasks to implement
+agentic-fy verify                    →  checks artifacts/tasks and runs the evidence commands
+agentic-fy archive                   →  change archived
 ```
 
-**Na dúvida, comece explorando.** `explore` é um parceiro de raciocínio sem compromisso. Já sabe exatamente o que quer? Pule direto para `propose`.
+**When in doubt, start by exploring.** `explore` is a no-stakes thinking partner. Already know exactly what you want? Jump straight to `propose`.
 
-Esses comandos rodam no terminal. Para deixar seu assistente de IA conduzir o fluxo, conecte o servidor MCP (`agentic-fy mcp`) — veja [Comandos](commands.md#mcp).
+These commands run in the terminal. To let your AI assistant drive the flow, connect the MCP server (`agentic-fy mcp`) — see [Commands](commands.md#mcp).
 
-## "Facilitadores, não portões"
+## "Enablers, not gates"
 
-Processos de spec à moda antiga são cascatas: termine o planejamento, *então* você pode implementar, e voltar atrás é doloroso. O agentic-fy recusa isso. A ordem `proposal → specs → design → tasks` mostra o que se torna *possível* em seguida, não o que você é *obrigado* a fazer.
+Old-school spec processes are waterfalls: finish planning, *then* you may implement, and going back is painful. agentic-fy refuses that. The order `proposal → specs → design → tasks` shows what becomes *possible* next, not what you're *required* to do.
 
-Descobriu durante a implementação que o design estava errado? Edite `design.md` e siga. Percebeu que o escopo deveria diminuir? Atualize a proposta. Nada trava. As dependências existem só para dar à IA o contexto de que ela precisa, não para te prender.
+Found during implementation that the design was wrong? Edit `design.md` and move on. Realized the scope should shrink? Update the proposal. Nothing locks. The dependencies exist only to give the AI the context it needs, not to trap you.
 
-O tradeoff é disciplina: como nada te empurra para frente, cabe a você manter uma change focada em vez de deixá-la crescer sem controle.
+The trade-off is discipline: since nothing pushes you forward, it's on you to keep a change focused instead of letting it sprawl.
 
-## Por que vale o pequeno overhead
+## Why the small overhead is worth it
 
-Verdade nua: o agentic-fy adiciona um passo. Você escreve um plano curto antes de construir. O que você ganha?
+Plain truth: agentic-fy adds a step. You write a short plan before building. What do you get?
 
-- **Você pega desvios antes que custem caro.** Corrigir um mal-entendido numa proposta de um parágrafo é de graça. Corrigir depois que a IA escreveu 400 linhas, não.
-- **O plano e o código ficam no mesmo repositório.** Seis meses depois, a spec conta por que o sistema funciona do jeito que funciona.
-- **Mudanças são revisáveis.** Uma pasta de change é um pacote organizado: leia a proposta, veja o design, confira as tarefas.
+- **You catch detours before they get expensive.** Fixing a misunderstanding in a one-paragraph proposal is free. Fixing it after the AI wrote 400 lines isn't.
+- **The plan and the code live in the same repo.** Six months later, the spec explains why the system works the way it does.
+- **Changes are reviewable.** A change folder is a tidy package: read the proposal, see the design, check the tasks.
 
-E o tradeoff honesto: para uma correção de uma linha, a cerimônia pode não compensar, e tudo bem. Use onde o acordo importa.
+And the honest trade-off: for a one-line fix the ceremony may not pay off, and that's fine. Use it where the agreement matters.
 
-## Para onde ir agora
+## Where to go next
 
-- Novo por aqui? [Primeiros passos](getting-started.md) percorre a primeira change por inteiro.
-- Quer a versão profunda de tudo acima? [Conceitos](concepts.md).
-- Referência de comandos? [Comandos](commands.md).
+- New here? [Getting started](getting-started.md) walks through the first change end to end.
+- Want the deep version of everything above? [Concepts](concepts.md).
+- Command reference? [Commands](commands.md).

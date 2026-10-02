@@ -2,9 +2,11 @@ import type { Command } from 'commander';
 import path from 'path';
 import chalk from 'chalk';
 
-import { initProject } from '../core/init.js';
-import { selectTools } from '../core/tool-selection.js';
+import { initProject, type InitPhase } from '../core/init.js';
+import { selectTools, canPromptInteractively } from '../core/tool-selection.js';
 import { ALL_TOOL_IDS } from '../core/tools.js';
+import { startStep, type Spinner } from '../ui/spinner.js';
+import { renderBanner } from '../ui/version.js';
 
 /**
  * Registers the `init` command, which creates the base project structure
@@ -24,9 +26,20 @@ export function registerInitCommand(
     )
     .action(async (targetPath = '.', options: { tools?: string }) => {
       try {
+        // The interactive tool prompt renders its own banner/header. It only
+        // runs when no --tools flag is given AND there's a TTY. In every other
+        // path (--tools provided, or non-interactive) the prompt never shows,
+        // so we print the logo here — otherwise init would have no banner at
+        // all. The condition mirrors selectTools' decision, avoiding a double
+        // logo when the prompt does show it.
+        const noColor = () => process.env.NO_COLOR === '1' || process.env.NO_COLOR === 'true';
+        const promptWillShowLogo = options.tools === undefined && canPromptInteractively();
+        if (!promptWillShowLogo) {
+          console.log();
+          console.log(renderBanner(!noColor()));
+        }
+
         // 1. Select the tools (flag > interactive prompt > none).
-        //    The interactive prompt renders its own banner/header; we don't
-        //    print one here to avoid showing the logo twice.
         const tools = await selectTools(path.resolve(targetPath), { toolsFlag: options.tools });
 
         // Cancelled at the prompt (Esc / Ctrl-C): abort without creating anything.
@@ -35,10 +48,34 @@ export function registerInitCommand(
           return;
         }
 
-        // 2. Create the structure and configure the selected tools.
-        const result = await initProject(targetPath, tools);
+        // 2. Create the structure and configure the selected tools, with a
+        //    per-phase spinner. The in-progress label per phase; the ✓ carries
+        //    the detail the core reports. No artificial delay — a spinner only
+        //    shows frames if the work actually takes time.
+        const toolList = tools.map((t) => t.id).join(', ');
+        const labels: Record<InitPhase, string> = {
+          structure: 'Creating project structure...',
+          config: 'Writing agentic-fy.config.yaml...',
+          tools: `Configuring MCP${toolList ? ` (${toolList})` : ''}...`,
+          skills: 'Generating commands & skills...',
+        };
+        let active: Spinner | null = null;
+
+        console.log();
+        const result = await initProject(targetPath, tools, {
+          onProgress: (event) => {
+            if (event.stage === 'start') {
+              active = startStep(labels[event.phase], { delay: 150 });
+            } else if (active) {
+              active.succeed(event.detail ?? labels[event.phase]);
+              active = null;
+            }
+          },
+        });
         const rel = (p: string) => path.relative(result.root, p) || '.';
 
+        console.log(chalk.green('✓') + ' Project initialized');
+        console.log();
         console.log(chalk.bold('agentic-fy project initialized'));
         console.log(`Root: ${result.root}`);
         if (result.createdDirs.length > 0) {

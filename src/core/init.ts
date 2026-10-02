@@ -16,6 +16,26 @@ export interface InitResult {
   skills: SkillSetupResult[];
 }
 
+/** A phase of `initProject`, reported through the optional progress callback. */
+export type InitPhase = 'structure' | 'config' | 'tools' | 'skills';
+
+export interface InitProgressEvent {
+  phase: InitPhase;
+  stage: 'start' | 'done';
+  /** A short human summary available when stage === 'done'. */
+  detail?: string;
+}
+
+export interface InitOptions {
+  /**
+   * Optional progress callback. The core stays presentation-free: it only
+   * emits structured events (start/done per phase); the CLI decides how to
+   * render them (e.g. a spinner). Phases that don't apply (no tools) are not
+   * emitted at all.
+   */
+  onProgress?: (event: InitProgressEvent) => void;
+}
+
 /**
  * Creates only the base project structure, mirroring the core of the `init`
  * command from the reference project (/base): directories + config.yaml.
@@ -31,12 +51,15 @@ export interface InitResult {
  */
 export async function initProject(
   targetPath = '.',
-  tools: readonly AiTool[] = []
+  tools: readonly AiTool[] = [],
+  options: InitOptions = {}
 ): Promise<InitResult> {
   const root = path.resolve(targetPath);
   const paths = resolveProjectPaths(root);
+  const emit = options.onProgress ?? (() => {});
 
   // Base directories (with .gitkeep to version empty folders).
+  emit({ phase: 'structure', stage: 'start' });
   const directories = [paths.agenticDir, paths.specsDir, paths.changesDir, paths.archiveDir];
   const createdDirs: string[] = [];
   for (const dir of directories) {
@@ -48,8 +71,14 @@ export async function initProject(
 
   await writeGitkeep(paths.specsDir);
   await writeGitkeep(paths.archiveDir);
+  emit({
+    phase: 'structure',
+    stage: 'done',
+    detail: createdDirs.length > 0 ? 'Structure created' : 'Structure already existed',
+  });
 
   // Config: create only if it doesn't exist.
+  emit({ phase: 'config', stage: 'start' });
   let configStatus: 'created' | 'exists';
   if (existsSync(paths.configFile)) {
     configStatus = 'exists';
@@ -61,12 +90,38 @@ export async function initProject(
     );
     configStatus = 'created';
   }
+  emit({
+    phase: 'config',
+    stage: 'done',
+    detail: configStatus === 'created' ? 'Config created' : 'Config already existed',
+  });
 
   // Configure the MCP integration of the selected tools (non-destructive).
-  const toolResults = tools.length > 0 ? await setupTools(root, tools) : [];
+  // The tools/skills phases are only emitted when there is something to do.
+  let toolResults: ToolSetupResult[] = [];
+  if (tools.length > 0) {
+    emit({ phase: 'tools', stage: 'start' });
+    toolResults = await setupTools(root, tools);
+    emit({
+      phase: 'tools',
+      stage: 'done',
+      detail: `${toolResults.length} tool${toolResults.length === 1 ? '' : 's'} configured`,
+    });
+  }
 
   // Generate slash commands / skills for tools that read them (non-destructive).
-  const skillResults = tools.length > 0 ? await generateSkills(root, tools) : [];
+  let skillResults: SkillSetupResult[] = [];
+  if (tools.length > 0) {
+    emit({ phase: 'skills', stage: 'start' });
+    skillResults = await generateSkills(root, tools);
+    const totalCmds = skillResults.reduce((n, s) => n + s.commands.created + s.commands.updated, 0);
+    const totalSkills = skillResults.reduce((n, s) => n + s.skills.created + s.skills.updated, 0);
+    emit({
+      phase: 'skills',
+      stage: 'done',
+      detail: `${totalCmds} command${totalCmds === 1 ? '' : 's'}, ${totalSkills} skill${totalSkills === 1 ? '' : 's'}`,
+    });
+  }
 
   return { root, createdDirs, configStatus, tools: toolResults, skills: skillResults };
 }

@@ -1,199 +1,206 @@
-# Primeiros passos
+# Getting started
 
-Este guia explica como o agentic-fy funciona, da instalação à sua primeira mudança. Novo em toda a documentação? O [índice](README.md) mapeia tudo.
+This guide explains how agentic-fy works, from install to your first change. New to all the docs? The [index](README.md) maps everything.
 
-O agentic-fy é um CLI Node.js. Você precisa da versão 20.19.0 ou mais nova.
+agentic-fy is a Node.js CLI. You need version 20.19.0 or newer.
 
-## Instalação
+## Installation
 
-No seu terminal, confira o Node:
+In your terminal, check Node:
 
 ```bash
 node --version
 ```
 
-Se imprimir `v20.19.0` ou superior, você está pronto. Se não, instale um Node mais novo em nodejs.org ou por um gerenciador de versões (nvm, fnm, asdf, volta).
+If it prints `v20.19.0` or higher, you're set. If not, install a newer Node from nodejs.org or via a version manager (nvm, fnm, asdf, volta).
 
-Instale o CLI globalmente:
-
-```bash
-npm install -g agentic-fy
-```
-
-Se você não puder instalar global (erro de permissão em `/usr/local`), rode direto sem instalar:
+Install the CLI globally:
 
 ```bash
-npx agentic-fy --version
+npm install -g @agentic-fy/agentic-fy
 ```
 
-### Confirme que funcionou
+If you can't install globally (permission error under `/usr/local`), run it directly without installing:
+
+```bash
+npx @agentic-fy/agentic-fy --version
+```
+
+### Confirm it worked
 
 ```bash
 agentic-fy --version
 ```
 
-Se imprimir o logo e um número de versão, o CLI está no seu PATH.
+If it prints the logo and a version number, the CLI is on your PATH.
 
-## Seus primeiros cinco minutos
+## Your first five minutes
 
-O loop inteiro:
+The whole loop:
 
 ```text
-$ npm install -g agentic-fy
-$ cd seu-projeto && agentic-fy init
-$ agentic-fy explore                    (opcional: pense primeiro)
-$ agentic-fy propose add-dark-mode      (rascunha o plano; você revisa)
-$ agentic-fy apply                      (acompanha as tarefas)
-$ agentic-fy verify                     (confere se está pronto)
-$ agentic-fy archive                    (change arquivada)
+$ npm install -g @agentic-fy/agentic-fy
+$ cd your-project && agentic-fy init
+$ agentic-fy explore add-dark-mode      (optional: start it in "exploring" and think first)
+$ agentic-fy propose add-dark-mode      (drafts the plan; you review it)
+$ agentic-fy apply                      (tracks the tasks)
+$ agentic-fy verify                     (runs evidence; checks it's ready)
+$ agentic-fy archive                    (change archived)
 ```
 
-> **Não sabe ainda o que construir? Comece com `agentic-fy explore`.** É um parceiro de raciocínio sem compromisso: mostra o estado do projeto e as changes ativas, e ajuda a transformar uma ideia difusa num plano concreto antes de qualquer código.
+> **Not sure what to build yet? Start with `agentic-fy explore`.** It's a no-stakes thinking partner: it shows the project state and active changes, and helps turn a fuzzy idea into a concrete plan before any code. Give it a name (`explore add-dark-mode`) to start the change in the `exploring` state.
 
-## O que o agentic-fy cria
+## What agentic-fy creates
 
-Depois de rodar `agentic-fy init`, seu projeto ganha esta estrutura:
+After running `agentic-fy init`, your project gets this structure:
 
 ```
-agentic-fy.config.yaml     # configuração do projeto
+agentic-fy.config.yaml     # project configuration
 agentic-fy/
-├── specs/              # specs do projeto
-├── changes/            # mudanças propostas (uma pasta por change)
-│   └── archive/        # changes concluídas
+├── specs/              # project specs
+├── changes/            # proposed changes (one folder per change)
+│   └── archive/        # completed changes
 ```
 
-O `init` cria a estrutura base de forma idempotente (rodar de novo não sobrescreve o `agentic-fy.config.yaml`) e também **configura a integração MCP da sua IDE**. No terminal ele pergunta para qual ferramenta configurar (Kiro, Cursor, GitHub Copilot, Claude Code, Windsurf) e escreve o `mcp.json` correspondente apontando para `agentic-fy mcp`. Para pular o prompt, use `--tools`:
+`init` creates the base structure idempotently (running it again does not overwrite `agentic-fy.config.yaml`) and also **configures your IDE's MCP integration**. In a terminal it asks which AI tool to configure (pick one with ↑/↓ and Enter) and writes the matching `mcp.json` pointing to `agentic-fy mcp`. To skip the prompt — or to configure several tools at once — use `--tools`:
 
 ```bash
-agentic-fy init --tools kiro,cursor   # configura as ferramentas escolhidas
-agentic-fy init --tools none          # só a estrutura base
+agentic-fy init --tools kiro,cursor   # configure the chosen tools
+agentic-fy init --tools none          # just the base structure
 ```
 
-O merge é não-destrutivo: se você já tem um `mcp.json`, o agentic-fy só adiciona o próprio servidor sem apagar o resto. Veja [Comandos](commands.md#init) para os detalhes.
+The merge is non-destructive: if you already have an `mcp.json`, agentic-fy only adds its own server without deleting the rest. See [Commands](commands.md#init) for the details.
 
-Quando você cria uma change com `propose`, ela fica assim:
+When you create a change with `propose`, it looks like this:
 
 ```
-agentic-fy/changes/<nome-da-change>/
+agentic-fy/changes/<change-name>/
 ├── proposal.md
 ├── design.md
 ├── tasks.md
 ├── specs/
-│   └── spec.md
-└── .agentic-fy.yaml       # metadata (nome, status, datas)
+│   └── <change-name>.delta.yaml
+└── .agentic-fy.yaml       # metadata (name, status, dates)
 ```
 
-## Entendendo os artefatos
+## Understanding the artifacts
 
-Cada pasta de change contém artefatos que guiam o trabalho:
+Each change folder contains artifacts that guide the work:
 
-| Artefato | Propósito |
-|----------|-----------|
-| `proposal.md` | O "por quê" e o "o quê" — intenção, escopo e abordagem |
-| `specs/spec.md` | Requisitos e critérios de aceite |
-| `design.md` | O "como" — abordagem técnica e decisões de arquitetura |
-| `tasks.md` | Checklist de implementação com checkboxes |
+| Artifact | Purpose |
+|----------|---------|
+| `proposal.md` | The "why" and "what" — intent, scope, and approach |
+| `specs/<capability>.delta.yaml` | Spec delta: how the requirements change (merged into the project specs on archive) |
+| `design.md` | The "how" — technical approach and architecture decisions |
+| `tasks.md` | Implementation checklist with checkboxes |
 
-Os artefatos se apoiam uns nos outros:
+The artifacts build on each other:
 
 ```
-proposal ──► specs ──► design ──► tasks ──► implementar
+proposal ──► specs ──► design ──► tasks ──► implement
    ▲           ▲          ▲                    │
    └───────────┴──────────┴────────────────────┘
-              atualize conforme aprende
+              update as you learn
 ```
 
-Você sempre pode voltar e refinar artefatos anteriores à medida que aprende durante a implementação.
+You can always go back and refine earlier artifacts as you learn during implementation.
 
-## Exemplo: sua primeira change
+## Example: your first change
 
-Vamos adicionar dark mode a uma aplicação.
+Let's add dark mode to an application.
 
-### 1. Inicialize o projeto
+### 1. Initialize the project
 
 ```bash
-cd seu-projeto
+cd your-project
 agentic-fy init
 ```
 
-### 2. Crie a change
+### 2. Create the change
 
 ```text
 $ agentic-fy propose add-dark-mode
 
 [propose] add-dark-mode
-Criado: proposal.md
-Criado: design.md
-Criado: tasks.md
-Criado: specs/spec.md
+Created: proposal.md
+Created: design.md
+Created: tasks.md
+Created: specs/add-dark-mode.delta.yaml
 ```
 
-### 3. Preencha os artefatos
+### 3. Fill in the artifacts
 
-Edite os arquivos em `agentic-fy/changes/add-dark-mode/`:
-- `proposal.md` — por que e o que muda.
-- `design.md` — como fazer.
-- `tasks.md` — marque as tarefas reais, por exemplo:
+Edit the files in `agentic-fy/changes/add-dark-mode/`:
+- `proposal.md` — why and what changes.
+- `design.md` — how to do it.
+- `specs/add-dark-mode.delta.yaml` — how the requirements change (add/modify/remove, each able to declare a `verify` command).
+- `tasks.md` — write the real tasks, for example:
 
 ```markdown
-# Tarefas — add-dark-mode
+# Tasks — add-dark-mode
 
-- [ ] 1. Criar ThemeContext com estado light/dark
-- [ ] 2. Adicionar toggle de tema nas configurações
-- [ ] 3. Persistir a preferência no localStorage
+- [ ] 1. Create ThemeContext with light/dark state
+- [ ] 2. Add a theme toggle to settings
+- [ ] 3. Persist the preference in localStorage
 ```
 
-### 4. Acompanhe a implementação
+### 4. Track the implementation
 
 ```text
 $ agentic-fy apply
 
 [apply] add-dark-mode
-Aplicando a change "add-dark-mode".
-Tarefas: 0 concluídas, 3 pendentes.
-  [ ] 1. Criar ThemeContext com estado light/dark
-  [ ] 2. Adicionar toggle de tema nas configurações
-  [ ] 3. Persistir a preferência no localStorage
+Applying change "add-dark-mode".
+Tasks: 0 completed, 3 pending.
+  [ ] 1. Create ThemeContext with light/dark state
+  [ ] 2. Add a theme toggle to settings
+  [ ] 3. Persist the preference in localStorage
 ```
 
-Implemente as tarefas e marque-as como `[x]` no `tasks.md` conforme conclui.
+Implement the tasks and mark them `[x]` in `tasks.md` as you go.
 
-### 5. Verifique
+### 5. Verify
+
+If your requirements declare a `verify` command in the spec delta, `verify` runs them and reports evidence per requirement. A change is only marked `verified` when the evidence passes and there are no gaps (use `--allow-gaps` to accept requirements without a command).
 
 ```text
 $ agentic-fy verify
 
 [verify] add-dark-mode
-Todos os artefatos presentes (proposal, design, tasks).
-Todas as tarefas marcadas como concluídas.
-Status atualizado para "verified".
+All artifacts present (proposal, design, tasks).
+All tasks marked as completed.
+Evidence: 2/2 requirement(s) proven.
+  ✓ dark-mode-toggle    (npm test -- theme)
+  ✓ persist-preference  (npm test -- persist)
+Status updated to "verified".
 ```
 
-O `verify` só marca como concluído quando todos os artefatos existem e todas as tarefas estão marcadas.
+### 6. Archive
 
-### 6. Arquive
+Archiving merges the change's spec delta into the project's consolidated specs, then moves the change to history. Preview the merge first with `agentic-fy archive --dry-run`.
 
 ```text
 $ agentic-fy archive
 
 [archive] add-dark-mode
-Change "add-dark-mode" arquivada em agentic-fy/changes/archive/add-dark-mode.
+Spec "dark-mode" created: +1 ~0 -0
+Change "add-dark-mode" archived at agentic-fy/changes/archive/add-dark-mode.
 ```
 
-## Deixando a IA conduzir (MCP)
+## Letting the AI drive (MCP)
 
-Os comandos acima rodam no terminal. Para o seu assistente de IA conduzir o workflow, use o servidor MCP.
+The commands above run in the terminal. To let your AI assistant drive the workflow, use the MCP server.
 
-Se você escolheu uma ferramenta no `agentic-fy init` (ou passou `--tools`), o `mcp.json` da sua IDE já foi configurado — é só reiniciar/recarregar a IDE. Para configurar manualmente ou subir o servidor à mão:
+If you chose a tool during `agentic-fy init` (or passed `--tools`), your IDE's `mcp.json` was already configured — just reload the IDE. To configure manually or start the server by hand:
 
 ```bash
 agentic-fy mcp
 ```
 
-Ele expõe as ferramentas `explore`, `propose`, `apply`, `verify`, `archive`, `list`, `show` e `validate` para qualquer agente compatível com MCP. Veja [Comandos](commands.md#mcp) para a configuração em editores como o Kiro.
+It exposes the `explore`, `propose`, `apply`, `verify`, `merge`, `archive`, `list`, `show`, `validate`, `status`, `context`, `doctor`, and `config` tools to any MCP-compatible agent. See [Commands](commands.md#mcp) for setup in editors like Kiro.
 
-## Próximos passos
+## Next steps
 
-- [Conceitos essenciais](overview.md) — o modelo mental numa página
-- [Comandos](commands.md) — referência de todos os comandos
-- [Conceitos](concepts.md) — entendimento profundo de specs, changes e archive
+- [Core concepts](overview.md) — the mental model on one page
+- [Commands](commands.md) — reference for every command
+- [Concepts](concepts.md) — deep understanding of specs, changes, and archiving

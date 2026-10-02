@@ -3,6 +3,5 @@
 /base
 
 UNCOMMID.md
-/test
-/tmp
+.tmp
 .wrangler

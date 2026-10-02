@@ -200,6 +200,29 @@ export async function listChanges(root: string): Promise<Change[]> {
   return changes;
 }
 
+/**
+ * Resolves the change name: uses the provided one, or the only active change if
+ * there is exactly one. Otherwise, throws guiding the user to specify it.
+ * Shared by the workflow functions and the task command.
+ */
+export async function resolveSingleChange(root: string, name?: string): Promise<string> {
+  if (name) {
+    // readChange/archiveChange do the final validation of the name.
+    return name;
+  }
+  const list = await listChanges(root);
+  if (list.length === 1) {
+    return list[0].name;
+  }
+  if (list.length === 0) {
+    throw new Error('No active changes. Run "propose <name>" first.');
+  }
+  throw new Error(
+    `There are multiple active changes (${list.map((c) => c.name).join(', ')}). ` +
+      `Specify the name: use "<command> <name>".`
+  );
+}
+
 /** Moves a completed change to `agentic-fy/changes/archive/<name>/`. */
 export async function archiveChange(root: string, rawName: string): Promise<string> {
   const name = normalizeChangeName(rawName);

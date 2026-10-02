@@ -103,6 +103,38 @@ export const WORKFLOW_TEMPLATES: readonly WorkflowTemplate[] = [
 1. Confirm the change is verified.
 2. Run \`agentic-fy archive <name>\` to move it into changes/archive/ and mark it archived.`,
   },
+  {
+    id: 'merge',
+    title: 'agentic-fy: Merge',
+    description:
+      'Early-sync a change\'s spec deltas into the project specs without archiving. Use to keep the consolidated specs current while the change is still in progress.',
+    body: `Early-sync an agentic-fy change into the project specs (without archiving it).
+
+1. Preview first with \`agentic-fy merge <name> --dry-run\` to see the +added ~modified -removed counts.
+2. If it looks right, run \`agentic-fy merge <name>\` to apply the spec deltas into agentic-fy/specs/.
+3. The change stays active — keep working, and merge again whenever the specs should reflect the latest requirements. The merge is idempotent, so re-running is safe.`,
+  },
+  {
+    id: 'validate',
+    title: 'agentic-fy: Validate',
+    description:
+      'Check a change\'s artifacts and spec deltas for problems (missing/empty artifacts, untouched templates, malformed deltas). Use before apply or verify.',
+    body: `Validate an agentic-fy change.
+
+1. Run \`agentic-fy validate <name>\` (or \`--all\` for every active change).
+2. Fix each reported ERROR; review WARNINGs (templates left unfilled, near-empty artifacts).
+3. Use \`--strict\` to treat warnings as failures when you want a clean bar before verifying.`,
+  },
+  {
+    id: 'status',
+    title: 'agentic-fy: Status',
+    description:
+      'Overview of all active changes: stage, task progress, and issue counts. Use to see where things stand.',
+    body: `Report agentic-fy project status.
+
+1. Run \`agentic-fy status\` for a per-change overview (stage, tasks done/total, error/warning counts).
+2. Use it to decide what to work on next: finish pending tasks, resolve validation errors, or verify a change that looks complete.`,
+  },
 ];
 
 /** Escapes a value for safe single-line YAML frontmatter. */

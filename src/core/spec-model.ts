@@ -137,10 +137,13 @@ export function parseSpec(content: string, fallbackCapability = ''): CapabilityS
     scenario = null;
   };
   const flushStatement = () => {
-    if (current && statementLines.length > 0) {
-      current.statement = statementLines.join('\n').trim();
-      statementLines.length = 0;
-    }
+    if (!current) return;
+    const text = statementLines.join('\n').trim();
+    statementLines.length = 0;
+    // Only overwrite when the accumulated lines hold real content. Blank lines
+    // between the statement and the verify/scenario blocks would otherwise
+    // trigger a second flush that wipes an already-captured statement.
+    if (text) current.statement = text;
   };
   const flushRequirement = () => {
     flushScenario();

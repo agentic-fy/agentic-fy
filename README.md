@@ -89,7 +89,7 @@ Any other MCP-compatible client can connect manually to `agentic-fy mcp`.
 | Command | What it does |
 |---|---|
 | `init [path] [--tools <list>]` | Creates the base structure and integrates the AI tools (MCP + commands/skills) |
-| `explore` | Thinking mode: maps the problem and lists active changes |
+| `explore [name]` | Thinking mode: maps the problem; with a name, starts the change as `exploring` |
 | `propose <name>` | Creates the change and drafts `proposal`, `design`, `tasks`, and a spec delta |
 | `apply [name]` | Reads `tasks.md` and reports task progress |
 | `verify [name] [--allow-gaps]` | Runs each requirement's evidence command; moves the change to `verified` or `converging` |
@@ -104,6 +104,7 @@ Any other MCP-compatible client can connect manually to `agentic-fy mcp`.
 | `context [--json]` | Gathers config, changes, and specs into a brief for the agent |
 | `view [--static] [--json]` | Specs and changes dashboard (interactive in the terminal) |
 | `completion [shell]` | Prints an autocompletion script (powershell/bash/zsh) |
+| `ticket [--print]` | Opens the GitHub "new issue" page (bug report / feature request) |
 | `mcp` | Starts the MCP server (stdio) |
 
 Full reference in [`docs/commands.html`](docs/commands.html).
@@ -169,7 +170,7 @@ If you chose a tool during `init`, your editor's MCP config has already been wri
 agentic-fy mcp
 ```
 
-It exposes the `explore`, `propose`, `apply`, `verify`, `merge`, `archive`, `list`, `show`, `validate`, `status`, and `context` tools to any MCP-compatible agent. Per-editor setup in [`docs/commands.html`](docs/commands.html).
+It exposes the `explore`, `propose`, `apply`, `verify`, `merge`, `archive`, `list`, `show`, `validate`, `status`, `context`, `doctor`, and `config` tools to any MCP-compatible agent. Per-editor setup in [`docs/commands.html`](docs/commands.html).
 
 ## Language
 

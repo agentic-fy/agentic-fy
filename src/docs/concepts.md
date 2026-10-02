@@ -1,83 +1,94 @@
-# Conceitos
+# Concepts
 
-Esta é a explicação longa das ideias por trás do agentic-fy. Para a versão de uma página, veja [Conceitos essenciais](overview.md).
+This is the long explanation of the ideas behind agentic-fy. For the one-page version, see [Core concepts](overview.md).
 
-## O problema que o agentic-fy resolve
+## The problem agentic-fy solves
 
-Quando você trabalha com um assistente de IA, é fácil pedir algo vago e ver a IA construir, com confiança, a coisa errada. O agentic-fy insere uma camada leve de acordo: você e a IA escrevem e revisam um plano curto antes que o código seja escrito. O plano vive no repositório, ao lado do código, então continua útil meses depois.
+When you work with an AI assistant, it's easy to ask for something vague and watch the AI confidently build the wrong thing. agentic-fy inserts a lightweight layer of agreement: you and the AI write and review a short plan before any code is written. The plan lives in the repository, next to the code, so it stays useful months later.
 
 ## Change
 
-Uma **change** é a unidade central de trabalho. Sempre que você quer adicionar, modificar ou remover comportamento, cria uma change com `agentic-fy propose <nome>`. Cada change é uma pasta em `agentic-fy/changes/<nome>/` que reúne tudo sobre aquele trabalho:
+A **change** is the central unit of work. Whenever you want to add, modify, or remove behavior, you create a change with `agentic-fy propose <name>`. Each change is a folder under `agentic-fy/changes/<name>/` that gathers everything about that work:
 
 ```
 agentic-fy/changes/add-dark-mode/
-├── proposal.md         # por quê e o quê
-├── design.md           # como
-├── tasks.md            # passos
+├── proposal.md                 # why and what
+├── design.md                   # how
+├── tasks.md                    # steps
 ├── specs/
-│   └── spec.md         # requisitos e critérios de aceite
-└── .agentic-fy.yaml       # metadata: nome, status, datas
+│   └── add-dark-mode.delta.yaml  # how the requirements change (spec delta)
+└── .agentic-fy.yaml            # metadata: name, status, dates
 ```
 
-O nome que você passa é normalizado para um slug seguro em disco: `"SideBar Menu Mode"` vira `add-dark-mode`.
+The name you pass is normalized into a disk-safe slug: `"Dark Mode Toggle"` becomes `dark-mode-toggle`.
 
-## Artefatos
+## Artifacts
 
-Cada change contém quatro tipos de artefato, criados numa ordem natural em que cada um alimenta o próximo:
+Each change contains a few kinds of artifact, created in a natural order where each one feeds the next:
 
-| Artefato | Pergunta que responde |
-|----------|-----------------------|
-| `proposal.md` | Por que fazer isso e o que muda? |
-| `specs/spec.md` | Quais são os requisitos e critérios de aceite? |
-| `design.md` | Como isso será construído? |
-| `tasks.md` | Quais são os passos concretos de implementação? |
-
-```
-proposal ──► specs ──► design ──► tasks ──► implementar
-   por quê     o quê      como      passos      fazer
-```
-
-O `propose` gera esses arquivos a partir de templates. A partir daí, você (ou a IA) os preenche com o conteúdo real. O `tasks.md` usa checkboxes de Markdown (`- [ ]` / `- [x]`), que o agentic-fy entende para acompanhar o progresso.
-
-### Facilitadores, não portões
-
-A ordem dos artefatos mostra o que se torna *possível* em seguida, não o que você é *obrigado* a fazer. Se durante a implementação você descobre que o design estava errado, edite `design.md` e siga. Nada trava. As dependências existem só para dar contexto — não para prender você num processo em cascata.
-
-## Status e ciclo de vida
-
-Cada change carrega um `status` no seu `.agentic-fy.yaml`, que percorre o workflow:
+| Artifact | Question it answers |
+|----------|---------------------|
+| `proposal.md` | Why do this, and what changes? |
+| `specs/<capability>.delta.yaml` | How do the requirements change? (a structured spec delta) |
+| `design.md` | How will it be built? |
+| `tasks.md` | What are the concrete implementation steps? |
 
 ```
-exploring ──► proposed ──► applying ──► verified ──► archived
+proposal ──► specs ──► design ──► tasks ──► implement
+   why        what      how       steps       do
 ```
 
-- **exploring** — estado inicial de uma change recém-criada.
-- **proposed** — após `propose`, com os artefatos rascunhados.
-- **applying** — após `apply`, enquanto você implementa as tarefas.
-- **verified** — após `verify` passar (todos os artefatos presentes e todas as tarefas concluídas).
-- **archived** — após `archive`, com a change movida para o histórico.
+`propose` generates these files from templates. From there, you (or the AI) fill them with real content. `tasks.md` uses Markdown checkboxes (`- [ ]` / `- [x]`), which agentic-fy understands to track progress.
 
-Os comandos avançam esse status conforme você progride. O `verify` só promove para `verified` quando as condições são satisfeitas; caso contrário, ele aponta o que falta e mantém o status atual.
+### Spec deltas, not rewritten specs
 
-## Arquivamento
+A change doesn't rewrite whole specs. It describes *how* it changes a capability through a structured YAML delta (`specs/<capability>.delta.yaml`), referencing requirements by a **stable id** with `add`, `modify`, and `remove` operations. The structure is schema-validated, so a malformed delta fails loudly instead of silently. On `merge` or `archive`, the delta is applied into the consolidated project spec at `agentic-fy/specs/<capability>.md`.
 
-Quando o trabalho termina, `agentic-fy archive` move a pasta da change para `agentic-fy/changes/archive/<nome>/` e marca o status como `archived`. O histórico fica preservado ali — Markdown simples que continua legível mesmo sem o agentic-fy. Assim você fecha o ciclo e libera o espaço de trabalho para a próxima change.
+### Enablers, not gates
 
-## O modelo: CLI + agente
+The order of the artifacts shows what becomes *possible* next, not what you are *required* to do. If, during implementation, you discover the design was wrong, edit `design.md` and move on. Nothing locks. The dependencies exist only to provide context — not to trap you in a waterfall process.
 
-Um ponto importante e honesto: **o agentic-fy não contém um modelo de IA.** Ele não faz chamadas a nenhum provedor de LLM. O CLI é a ferramenta que cria e acompanha os artefatos e o status; a inteligência que lê o design, escreve o código e marca as tarefas vem do **agente de IA** que usa a ferramenta.
+## Status and lifecycle
 
-Há dois modos de uso:
+Each change carries a `status` in its `.agentic-fy.yaml`, moving through the workflow:
 
-1. **Manual (terminal).** Você roda os comandos, edita os artefatos à mão e implementa o código você mesmo.
-2. **Assistido (MCP).** Você inicia `agentic-fy mcp` e conecta um assistente de IA compatível com MCP (como o Kiro). O agente passa a usar as ferramentas `explore/propose/apply/verify/archive` e conduz o fluxo, escrevendo o código e marcando as tarefas.
+```
+exploring ──► proposed ──► applying ──► converging ⇄ verified ──► archived
+```
 
-Esse desenho — CLI como ferramenta, agente como cérebro — mantém o agentic-fy leve, sem custo de LLM embutido e sem depender de nenhum provedor específico. Veja [Comandos](commands.md#mcp) para conectar o servidor MCP ao seu editor.
+- **exploring** — initial state; set when you start a change with `explore <name>`.
+- **proposed** — after `propose`, with the artifacts drafted.
+- **applying** — after `apply`, while you implement the tasks.
+- **converging** — after `verify` ran but something isn't proven yet (missing artifact, pending task, or failed/absent evidence). This is the verify → fix → verify loop.
+- **verified** — after `verify` passes: all artifacts present, all tasks done, and every requirement's evidence proven (no gaps).
+- **archived** — after `archive`, with the change moved to history.
 
-## Config do projeto
+The commands advance this status as you progress. `verify` only promotes to `verified` when the conditions are met; otherwise it sets `converging` and reports what's left.
 
-O `agentic-fy.config.yaml`, criado pelo `init`, guarda a configuração base do projeto:
+## Evidence
+
+A requirement in a spec delta can declare a `verify` command — a shell command that *proves* it (exit 0 = met). `agentic-fy verify` runs those commands and reports, per requirement, whether it passed, failed, or has no command. A change is only `verified` when nothing fails and there are no gaps.
+
+Evidence is **command-only by design**: there is no self-declared "manual" pass. A requirement with no command is an honest, visible gap — you can accept it explicitly with `--allow-gaps`, but it is never silently counted as proven. This is what keeps an AI agent from marking a requirement done without an executable proof.
+
+## Archiving
+
+When the work is finished, `agentic-fy archive` merges the change's spec deltas into the consolidated project specs, then moves the change folder to `agentic-fy/changes/archive/<name>/` and marks the status as `archived`. The history is preserved there — plain Markdown that stays readable even without agentic-fy. That closes the loop and frees the workspace for the next change.
+
+## The model: CLI + agent
+
+An important, honest point: **agentic-fy does not contain an AI model.** It makes no calls to any LLM provider. The CLI is the tool that creates and tracks the artifacts and status; the intelligence that reads the design, writes the code, and checks the tasks comes from the **AI agent** that uses the tool.
+
+There are two ways to use it:
+
+1. **Manual (terminal).** You run the commands, edit the artifacts by hand, and implement the code yourself.
+2. **Assisted (MCP).** You start `agentic-fy mcp` and connect an MCP-compatible assistant (such as Kiro). The agent then uses the `explore/propose/apply/verify/merge/archive` tools and drives the flow, writing the code and checking the tasks.
+
+This design — CLI as the tool, agent as the brain — keeps agentic-fy lean, with no built-in LLM cost and no dependency on a specific provider. See [Commands](commands.md#mcp) to connect the MCP server to your editor.
+
+## Project config
+
+`agentic-fy.config.yaml`, created by `init`, holds the project's base configuration:
 
 ```yaml
 version: 1
@@ -90,10 +101,10 @@ workflow:
   - archive
 ```
 
-Ele é lido para resolver a raiz do projeto (o agentic-fy sobe na árvore de diretórios procurando esse arquivo) e para conhecer o workflow ativo.
+It is read to resolve the project root (agentic-fy walks up the directory tree looking for this file) and to know the active workflow.
 
-## Para onde ir agora
+## Where to go next
 
-- [Primeiros passos](getting-started.md) — a primeira change por inteiro.
-- [Conceitos essenciais](overview.md) — o modelo mental numa página.
-- [Comandos](commands.md) — referência de todos os comandos.
+- [Getting started](getting-started.md) — the first change end to end.
+- [Core concepts](overview.md) — the mental model on one page.
+- [Commands](commands.md) — reference for every command.

@@ -1,5 +1,3 @@
-import type { Key } from 'node:readline';
-
 import { AI_TOOLS, AiTool, ALL_TOOL_IDS, detectTools, findTool } from './tools.js';
 import { renderBanner } from '../ui/version.js';
 
@@ -108,25 +106,48 @@ const purple = (s: string) => paint('38;5;92', s);
 const dim = (s: string) => paint('2', s);
 const bold = (s: string) => paint('1', s);
 
+/**
+ * Some terminals report a TTY and accept `setRawMode`, but still don't deliver
+ * ordinary keystrokes (space, letters) to the process — notably Git Bash /
+ * MSYS2 / Cygwin on Windows, where only arrow escape sequences and Enter get
+ * through. The keyboard multi-select is unusable there, so we detect those
+ * environments and fall back to the numeric prompt (which only needs Enter).
+ *
+ * Detection is best-effort via the usual MSYS/Cygwin environment markers.
+ */
+function rawModeIsReliable(): boolean {
+  if (process.platform !== 'win32') return true;
+  const term = (process.env.TERM ?? '').toLowerCase();
+  // MSYSTEM is set by Git Bash/MSYS2 (e.g. MINGW64); TERM=cygwin on Cygwin.
+  if (process.env.MSYSTEM) return false;
+  if (term.includes('cygwin')) return false;
+  return true;
+}
+
 /** Chooses which prompt to use based on TTY raw-mode support. Returns `null`
  * when the user cancels (Esc / Ctrl-C). */
 async function promptForTools(preselected: AiTool[]): Promise<AiTool[] | null> {
-  const canRaw = Boolean(process.stdin.isTTY && typeof process.stdin.setRawMode === 'function');
+  const canRaw =
+    Boolean(process.stdin.isTTY && typeof process.stdin.setRawMode === 'function') &&
+    rawModeIsReliable();
   return canRaw ? promptInteractive(preselected) : promptNumeric(preselected);
 }
 
 /**
- * Keyboard-driven multi-select: ↑/↓ move, Space toggles, `a` all, `n` none,
- * Enter confirms, Esc/Ctrl-C cancels (returns `null` → the caller aborts).
+ * Keyboard-driven SINGLE select: ↑/↓ move the highlight, Enter confirms the
+ * highlighted tool, Esc/Ctrl-C cancels (returns `null`). The filled square ◼
+ * marks the current cursor line — there is no space-to-toggle, because some
+ * terminals (WSL, Git Bash/MSYS) never deliver the spacebar to a raw-mode
+ * process. Only ↑/↓ and Enter are needed, which work everywhere. To configure
+ * several tools at once, use the non-interactive flag: `--tools kiro,cursor`.
  */
 async function promptInteractive(preselected: AiTool[]): Promise<AiTool[] | null> {
-  const readline = await import('node:readline');
   const out = process.stdout;
-  const preselectedIds = new Set(preselected.map((t) => t.id));
-  const selected = AI_TOOLS.map((t) => preselectedIds.has(t.id));
-  let cursor = 0;
-
   const detectedNames = preselected.map((t) => t.name).join(', ');
+
+  // Start the highlight on the first detected tool, if any.
+  const firstDetected = AI_TOOLS.findIndex((t) => preselected.some((p) => p.id === t.id));
+  let cursor = firstDetected >= 0 ? firstDetected : 0;
 
   // The header (logo + title) is printed ONCE. Only the option block below is
   // repainted on each keypress, so the multi-line banner never stacks up.
@@ -134,7 +155,7 @@ async function promptInteractive(preselected: AiTool[]): Promise<AiTool[] | null
     out.write('\n');
     out.write(renderBanner(!noColor()) + '\n');
     out.write('\n');
-    out.write(bold('Select AI tools to integrate') + '\n');
+    out.write(bold('Select an AI tool to integrate') + '\n');
     out.write('\n');
   };
 
@@ -144,17 +165,18 @@ async function promptInteractive(preselected: AiTool[]): Promise<AiTool[] | null
     const lines: string[] = [];
     AI_TOOLS.forEach((tool, i) => {
       const isCursor = i === cursor;
-      const box = selected[i] ? purple('●') : dim('●');
-      const pointer = isCursor ? purple('❯') : ' ';
-      const name = isCursor ? bold(tool.name) : tool.name;
-      lines.push(`  ${pointer} ${box}  ${name}`);
+      // The highlighted line is the selection: filled purple square + bold
+      // name. Every other line is a dim empty square + dim name.
+      const box = isCursor ? purple('◼') : dim('◻');
+      const name = isCursor ? bold(tool.name) : dim(tool.name);
+      lines.push(`    ${box}  ${name}`);
     });
     lines.push('');
     lines.push(dim('  ' + '─'.repeat(45)));
     lines.push(detectedNames ? dim(`  Detected: ${detectedNames}`) : dim('  Nothing detected'));
     lines.push('');
-    lines.push(dim('  ↑/↓ Navigate   Space Select   A All   N None'));
-    lines.push(dim('  Enter Continue   Esc Cancel'));
+    lines.push(dim('  ↑/↓ Navigate   Enter Select   Esc Cancel'));
+    lines.push(dim('  Tip: for several tools use --tools kiro,cursor'));
     return lines;
   };
 
@@ -171,46 +193,57 @@ async function promptInteractive(preselected: AiTool[]): Promise<AiTool[] | null
 
   return new Promise<AiTool[] | null>((resolve) => {
     const stdin = process.stdin;
-    readline.emitKeypressEvents(stdin);
+    // Raw mode so each keystroke arrives immediately (unbuffered). We read the
+    // raw 'data' bytes directly rather than readline's keypress events.
     stdin.setRawMode(true);
     stdin.resume();
 
     const cleanup = () => {
       stdin.setRawMode(false);
       stdin.pause();
-      stdin.removeListener('keypress', onKey);
+      stdin.removeListener('data', onData);
     };
 
-    const onKey = (_str: string, key: Key) => {
-      if (!key) return;
-      if (key.name === 'up' || key.name === 'k') {
-        cursor = (cursor - 1 + AI_TOOLS.length) % AI_TOOLS.length;
-        drawBlock();
-      } else if (key.name === 'down' || key.name === 'j') {
-        cursor = (cursor + 1) % AI_TOOLS.length;
-        drawBlock();
-      } else if (key.name === 'space') {
-        selected[cursor] = !selected[cursor];
-        drawBlock();
-      } else if (key.name === 'a') {
-        const allOn = selected.every(Boolean);
-        selected.fill(!allOn);
-        drawBlock();
-      } else if (key.name === 'n') {
-        selected.fill(false);
-        drawBlock();
-      } else if (key.name === 'return' || key.name === 'enter') {
-        cleanup();
-        out.write('\n');
-        resolve(AI_TOOLS.filter((_, i) => selected[i]));
-      } else if (key.name === 'escape' || (key.ctrl && key.name === 'c')) {
-        cleanup();
-        out.write('\n');
-        resolve(null); // cancel → the caller aborts init
+    const moveUp = () => {
+      cursor = (cursor - 1 + AI_TOOLS.length) % AI_TOOLS.length;
+      drawBlock();
+    };
+    const moveDown = () => {
+      cursor = (cursor + 1) % AI_TOOLS.length;
+      drawBlock();
+    };
+    const confirm = () => {
+      cleanup();
+      out.write('\n');
+      resolve([AI_TOOLS[cursor]]); // single selection
+    };
+    const cancel = () => {
+      cleanup();
+      out.write('\n');
+      resolve(null); // cancel → the caller aborts init
+    };
+
+    /**
+     * Reads raw stdin bytes directly. Only three gestures matter for a single
+     * select: move (↑/↓, also k/j), confirm (Enter), cancel (Esc/Ctrl-C) —
+     * all of which the terminal reliably delivers.
+     */
+    const onData = (chunk: Buffer) => {
+      const s = chunk.toString('utf8');
+
+      if (s === '\x1b[A') return moveUp();
+      if (s === '\x1b[B') return moveDown();
+      if (s === '\x1b') return cancel(); // lone ESC
+
+      for (const ch of s) {
+        if (ch === '\r' || ch === '\n') confirm();
+        else if (ch === '\x03') cancel(); // Ctrl-C
+        else if (ch === 'k') moveUp();
+        else if (ch === 'j') moveDown();
       }
     };
 
-    stdin.on('keypress', onKey);
+    stdin.on('data', onData);
     printHeader();
     drawBlock();
   });
@@ -226,7 +259,7 @@ async function promptNumeric(preselected: AiTool[]): Promise<AiTool[]> {
   const preselectedIds = new Set(preselected.map((t) => t.id));
 
   try {
-    console.log('Which tool(s) should agentic-fy be configured for (MCP)?');
+    console.log('Which AI tool should agentic-fy be configured for (MCP)?');
     AI_TOOLS.forEach((tool, i) => {
       const mark = preselectedIds.has(tool.id) ? ' *' : '';
       console.log(`  ${i + 1}) ${tool.name}${mark}`);
@@ -237,22 +270,19 @@ async function promptNumeric(preselected: AiTool[]): Promise<AiTool[]> {
       : '';
     const answer = (
       await rl.question(
-        `${hint}Choose the numbers separated by commas (Enter accepts the detected one[s]): `
+        `${hint}Choose one number (Enter accepts the detected; for several use --tools kiro,cursor): `
       )
     ).trim();
 
     if (answer === '') return preselected;
     if (answer === '0') return [];
 
-    const picked: AiTool[] = [];
-    for (const token of answer.split(',').map((s) => s.trim()).filter(Boolean)) {
-      const index = Number.parseInt(token, 10);
-      if (Number.isInteger(index) && index >= 1 && index <= AI_TOOLS.length) {
-        const tool = AI_TOOLS[index - 1];
-        if (!picked.some((t) => t.id === tool.id)) picked.push(tool);
-      }
+    const index = Number.parseInt(answer, 10);
+    if (Number.isInteger(index) && index >= 1 && index <= AI_TOOLS.length) {
+      return [AI_TOOLS[index - 1]];
     }
-    return picked;
+    // Unrecognized input: configure nothing rather than guessing.
+    return [];
   } finally {
     rl.close();
   }

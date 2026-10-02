@@ -11,6 +11,7 @@ import { registerConfigCommand } from '../commands/config.js';
 import { registerCompletionCommand } from '../commands/completion.js';
 import { registerViewCommand } from '../commands/view.js';
 import { registerMcpCommand } from '../commands/mcp.js';
+import { registerTicketCommand } from '../commands/ticket.js';
 import { renderVersion } from '../ui/version.js';
 
 const require = createRequire(import.meta.url);
@@ -51,6 +52,7 @@ registerConfigCommand(program, failWithError);
 registerCompletionCommand(program, failWithError);
 registerViewCommand(program, failWithError);
 registerMcpCommand(program, failWithError);
+registerTicketCommand(program, failWithError);
 
 export { program };
 

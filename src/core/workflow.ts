@@ -5,6 +5,7 @@ import {
   setChangeStatus,
   listChanges,
   archiveChange,
+  resolveSingleChange,
 } from './change.js';
 import {
   artifactStates,
@@ -35,12 +36,31 @@ export interface WorkflowResult {
 
 // ─── explore ─────────────────────────────────────────────────────────────────
 
-export async function runExplore(cwd = process.cwd()): Promise<WorkflowResult> {
+export async function runExplore(
+  name: string | undefined,
+  cwd = process.cwd()
+): Promise<WorkflowResult> {
   const root = requireProjectRoot(cwd);
+
+  // With a name: register the change in the `exploring` state. This is the
+  // entry point of the lifecycle — the change exists while the problem is still
+  // being mapped, before `propose` drafts its artifacts. `createChange` is
+  // idempotent, so re-exploring an existing change is safe.
+  if (name && name.trim()) {
+    const change = await createChange(root, name, 'exploring');
+    const messages = [
+      `Exploring "${change.name}": map the problem and the codebase (does not implement).`,
+      `Status: ${change.metadata.status}.`,
+      `When you are ready, run "propose ${change.name}" to draft proposal.md, design.md, tasks.md, and the spec delta.`,
+    ];
+    return { action: 'explore', change: change.name, status: change.metadata.status, messages };
+  }
+
+  // Without a name: stay stateless — just guide and list what's active.
   const list = await listChanges(root);
   const messages = [
     'Explore mode: map the problem and the codebase (does not implement).',
-    'When you are ready, use "propose <name>" to capture the change.',
+    'Give it a name to start a change: "explore <name>" (creates it as "exploring").',
     list.length > 0
       ? `Active changes: ${list.map((c) => `${c.name} (${c.metadata.status})`).join(', ')}`
       : 'No active changes yet.',
@@ -282,26 +302,4 @@ export async function runArchive(
   return { action: 'archive', change: changeName, status: 'archived', messages };
 }
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
 
-/**
- * Resolves the change name: uses the provided one, or the only active change if
- * there is exactly one. Otherwise, guides the user to specify it.
- */
-async function resolveSingleChange(root: string, name?: string): Promise<string> {
-  if (name) {
-    // readChange/archiveChange do the final validation of the name.
-    return name;
-  }
-  const list = await listChanges(root);
-  if (list.length === 1) {
-    return list[0].name;
-  }
-  if (list.length === 0) {
-    throw new Error('No active changes. Run "propose <name>" first.');
-  }
-  throw new Error(
-    `There are multiple active changes (${list.map((c) => c.name).join(', ')}). ` +
-      `Specify the name: use "<command> <name>".`
-  );
-}

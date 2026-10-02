@@ -1,102 +1,121 @@
-# Comandos
+# Commands
 
-Referência de cada comando do CLI `agentic-fy`. Todos rodam no seu terminal.
+Reference for every `agentic-fy` CLI command. They all run in your terminal.
 
-Flags globais:
-- `-v, --version` — mostra o logo, a versão e a lista de comandos.
-- `--help` — ajuda do comando.
-- `--no-color` — desabilita a saída colorida.
+Global flags:
+- `-v, --version` — shows the logo, the version, and the command list.
+- `--help` — command help.
+- `--no-color` — disables colored output.
 
-A maioria dos comandos (exceto `init` e `mcp`) precisa de um projeto já inicializado — ou seja, um `agentic-fy.config.yaml` no diretório atual ou em um diretório acima.
+Most commands (except `init` and `mcp`) require an already-initialized project — an `agentic-fy.config.yaml` in the current directory or a directory above it.
 
 ## init
 
 ```bash
-agentic-fy init [path] [--tools <lista>]
+agentic-fy init [path] [--tools <list>]
 ```
 
-Cria a estrutura base do projeto em `path` (padrão: diretório atual):
+Creates the base project structure in `path` (default: current directory):
 
 ```
 agentic-fy.config.yaml
 agentic-fy/
-├── specs/              (com .gitkeep)
+├── specs/              (with .gitkeep)
 ├── changes/
-│   └── archive/        (com .gitkeep)
+│   └── archive/        (with .gitkeep)
 ```
 
-Idempotente: rodar de novo garante que os diretórios existem e **não** sobrescreve o `agentic-fy.config.yaml`.
+Idempotent: running it again ensures the directories exist and does **not** overwrite `agentic-fy.config.yaml`.
 
-### Integração com ferramentas de IA
+### AI tool integration
 
-Além da estrutura, o `init` configura a integração MCP das ferramentas de IA que você usa, escrevendo (ou mesclando) o `mcp.json` de cada uma apontando para `agentic-fy mcp`. Assim o agente da sua IDE já enxerga as ferramentas do agentic-fy.
+Besides the structure, `init` configures the MCP integration of your AI tools, writing (or merging) each tool's `mcp.json` pointing to `agentic-fy mcp`. That way your IDE's agent sees agentic-fy's tools.
 
-Como as ferramentas são escolhidas:
+How tools are chosen:
 
-- **Interativo** (terminal com TTY): o `init` mostra a lista e deixa você escolher pelos números. As ferramentas já detectadas no projeto vêm pré-selecionadas (marcadas com `*`); pressionar Enter aceita a pré-seleção.
-- **Não-interativo** (`--tools`): pula o prompt.
-  - `--tools all` — configura todas as suportadas.
-  - `--tools none` — não configura nenhuma (só a estrutura base).
-  - `--tools kiro,cursor` — configura só as informadas.
-- **Sem TTY e sem `--tools`** (CI, pipes): não configura nenhuma ferramenta e segue normalmente.
+- **Interactive** (TTY): `init` shows the list and lets you pick **one** tool with ↑/↓ and Enter (the filled square ◼ marks the highlighted line). Detected tools are highlighted first.
+- **Non-interactive** (`--tools`): skips the prompt and is the way to configure **several** tools at once.
+  - `--tools all` — configures every supported tool.
+  - `--tools none` — configures none (just the base structure).
+  - `--tools kiro,cursor` — configures only the listed ones.
+- **No TTY and no `--tools`** (CI, pipes): configures no tool and proceeds normally.
 
-Ferramentas suportadas: `kiro`, `cursor`, `github-copilot`, `claude`, `windsurf`.
+> On terminals that don't deliver ordinary keystrokes to a raw-mode process (Git Bash/MSYS on Windows), the interactive prompt falls back to a numeric one. For several tools, prefer `--tools`.
 
-O merge é **não-destrutivo e idempotente**: outros servidores MCP e chaves já presentes no arquivo são preservados; rodar de novo não duplica nem sobrescreve uma configuração que você editou à mão. Cada ferramenta é reportada como `configurada`, `atualizada` ou `sem alteração`.
+Supported tools: `kiro`, `cursor`, `github-copilot`, `claude`, `windsurf`, `kimi`, `zed`, `opencode`.
 
-Exemplos:
+The merge is **non-destructive and idempotent**: other MCP servers and keys already in the file are preserved; running it again does not duplicate or overwrite a config you edited by hand. Each tool is reported as `configured`, `updated`, or `unchanged`.
+
+Examples:
 
 ```bash
-agentic-fy init --tools kiro,cursor    # configura Kiro e Cursor
-agentic-fy init --tools none           # só a estrutura base
-agentic-fy init                        # pergunta (ou nada, se sem TTY)
+agentic-fy init --tools kiro,cursor    # configures Kiro and Cursor
+agentic-fy init --tools none           # just the base structure
+agentic-fy init                        # asks (one tool), or nothing if no TTY
 ```
 
 ## explore
 
 ```bash
-agentic-fy explore
+agentic-fy explore [name]
 ```
 
-Modo pensamento. Confirma que existe um projeto agentic-fy e lista as changes ativas com seus status. Não cria nem altera nada — é um ponto de partida para mapear o problema antes de propor.
+Thinking mode to map the problem before proposing. Without a name, it confirms an agentic-fy project exists and lists the active changes with their status — it doesn't create or change anything. With a `name`, it registers the change in the `exploring` state, so the change exists while you're still mapping the problem (before `propose` drafts the artifacts). It's idempotent: re-exploring an existing change is safe.
 
 ## propose
 
 ```bash
-agentic-fy propose <nome>
+agentic-fy propose <name>
 ```
 
-Cria uma change e rascunha os artefatos a partir de templates:
+Creates a change and drafts the artifacts from templates:
 - `proposal.md`, `design.md`, `tasks.md`
-- `specs/spec.md`
+- `specs/<name>.delta.yaml` (the YAML spec delta)
 
-O `<nome>` é normalizado para um slug (ex.: `"add login"` vira `add-login`). Não sobrescreve arquivos já existentes. Ao final, marca o status da change como `proposed`.
+The `<name>` is normalized into a slug (e.g. `"add login"` becomes `add-login`). It does not overwrite existing files. At the end, it marks the change status as `proposed`.
 
 ## apply
 
 ```bash
-agentic-fy apply [nome]
+agentic-fy apply [name]
 ```
 
-Lê o `tasks.md` da change, faz o parse das checkboxes e reporta quantas tarefas estão concluídas e pendentes, listando as pendentes. Marca o status como `applying`.
+Reads the change's `tasks.md`, parses the checkboxes, and reports how many tasks are done and pending, listing the pending ones. Marks the status as `applying`.
 
-Se `nome` for omitido e houver exatamente uma change ativa, ela é usada; se houver várias, o comando pede que você especifique o nome.
+If `name` is omitted and there is exactly one active change, it is used; if there are several, the command asks you to specify the name.
 
 ## verify
 
 ```bash
-agentic-fy verify [nome]
+agentic-fy verify [name] [--allow-gaps]
 ```
 
-Confere se os três artefatos (`proposal`, `design`, `tasks`) existem e se todas as tarefas do `tasks.md` estão marcadas. Só marca a change como `verified` quando tudo está presente e sem tarefas pendentes; caso contrário, aponta o que falta.
+Checks that the artifacts (`proposal`, `design`, `tasks`) exist and that all tasks are checked — and then collects **evidence**. Each requirement can declare a `verify` command in its spec delta; `verify` runs those commands (exit 0 = proven) and reports per requirement:
+
+```
+Evidence: 2/3 requirement(s) proven.
+  ✓ dark-mode-toggle   (npm test -- theme)
+  ✗ persist-preference FAILED: npm test -- persist — exit 1
+  ✗ os-default-theme   NO EVIDENCE — no verify command
+```
+
+The change is only marked `verified` when nothing fails and there are no gaps. A requirement with no command is an honest gap, not a pass — there is no self-declared "manual" evidence. Use `--allow-gaps` to accept requirements that declare no command. When it isn't ready, the change enters the `converging` state and `verify` reports what's left.
+
+## merge
+
+```bash
+agentic-fy merge [name] [--dry-run]
+```
+
+Applies the change's spec deltas (`specs/*.delta.yaml`) into the project's consolidated specs at `agentic-fy/specs/<capability>.md`, **keeping the change active** (no archive). This "early-sync" keeps the specs — and the context an AI agent reads — current while the change is still in progress. It uses the same idempotent, fail-loud merge engine as `archive`. Use `--dry-run` to preview without writing.
 
 ## archive
 
 ```bash
-agentic-fy archive [nome]
+agentic-fy archive [name] [--dry-run]
 ```
 
-Move a change para `agentic-fy/changes/archive/<nome>/` e marca o status como `archived`.
+Merges the change's spec deltas into the project's consolidated specs, then moves the change to `agentic-fy/changes/archive/<name>/` and marks the status as `archived`. The merge is deterministic and idempotent, and fails loudly if a delta references a requirement that doesn't exist. Use `--dry-run` to preview the merge without writing or archiving.
 
 ## list
 
@@ -104,46 +123,47 @@ Move a change para `agentic-fy/changes/archive/<nome>/` e marca o status como `a
 agentic-fy list [--specs] [--long] [--json]
 ```
 
-Lista as changes ativas (fora do archive). Por padrão imprime só os nomes.
+Lists the active changes (outside the archive). By default it prints just the names.
 
-- `--long` — mostra também o status, o título (extraído do `proposal.md`) e o progresso de tarefas, ex.: `add-login (proposed): Login com OAuth [tarefas 1/3]`.
-- `--specs` — lista as specs do projeto (`agentic-fy/specs/*.md`) em vez das changes.
-- `--json` — saída estruturada, útil para scripts e agentes.
+- `--long` — also shows the status, title (extracted from `proposal.md`), and task progress, e.g. `add-login (proposed): Login with OAuth [tasks 1/3]`.
+- `--specs` — lists the project specs (`agentic-fy/specs/*.md`) instead of the changes.
+- `--json` — structured output, useful for scripts and agents.
 
 ## show
 
 ```bash
-agentic-fy show <nome> [--artifact <id>] [--spec <id>] [--json]
+agentic-fy show <name> [--artifact <id>] [--spec <id>] [--json]
 ```
 
-Mostra uma change. Sem flags, exibe um resumo: status, título, progresso de tarefas e quais artefatos existem.
+Shows a change. With no flags, it prints a summary: status, title, task progress, and which artifacts exist.
 
-- `--artifact <proposal|design|tasks>` — imprime o conteúdo cru daquele artefato.
-- `--spec <id>` — imprime o conteúdo de uma spec do projeto (`agentic-fy/specs/<id>.md`); independe da change.
-- `--json` — resumo estruturado da change.
+- `--artifact <proposal|design|tasks>` — prints the raw content of that artifact.
+- `--spec <id>` — prints the content of a project spec (`agentic-fy/specs/<id>.md`); independent of any change.
+- `--json` — structured summary of the change.
 
-Se o nome não bater com nenhuma change, o comando sugere os nomes mais próximos ("você quis dizer?").
+If the name doesn't match any change, the command suggests the closest names ("did you mean?").
 
 ## validate
 
 ```bash
-agentic-fy validate [nome] [--all] [--strict] [--json]
+agentic-fy validate [name] [--all] [--strict] [--json]
 ```
 
-Valida os artefatos de uma change e reporta problemas com nível `ERROR`, `WARNING` ou `INFO`. Diferente do `verify` (que só confere presença e checkboxes), o `validate` detecta artefatos que *parecem* prontos mas não estão:
+Validates a change's artifacts and reports issues at `ERROR`, `WARNING`, or `INFO` level. Unlike `verify` (which only checks presence and checkboxes), `validate` catches artifacts that *look* ready but aren't:
 
-- artefato ausente (`ERROR`);
-- artefato ainda idêntico ao template, ou seja, não preenchido (`WARNING`);
-- artefato praticamente vazio (`WARNING`);
-- `tasks.md` com itens de lista mas nenhum checkbox de verdade (`ERROR`);
-- tarefas ainda pendentes (`INFO`).
+- missing artifact (`ERROR`);
+- artifact still identical to the template, i.e. unfilled (`WARNING`);
+- practically empty artifact (`WARNING`);
+- `tasks.md` with list items but no real checkbox (`ERROR`);
+- the YAML spec deltas: malformed YAML or an invalid structure is a hard `ERROR`, an untouched delta template is a `WARNING`;
+- tasks still pending (`INFO`).
 
-Opções:
-- `--all` — valida todas as changes ativas.
-- `--strict` — trata `WARNING` como falha (afeta o código de saída).
-- `--json` — saída estruturada (um relatório, ou um array com `--all`).
+Options:
+- `--all` — validates every active change.
+- `--strict` — treats `WARNING` as a failure (affects the exit code).
+- `--json` — structured output (a report, or an array with `--all`).
 
-Se `nome` for omitido e houver exatamente uma change ativa, ela é usada. O código de saída é `1` quando alguma change é inválida.
+If `name` is omitted and there is exactly one active change, it is used. The exit code is `1` when any change is invalid.
 
 ## status
 
@@ -151,19 +171,19 @@ Se `nome` for omitido e houver exatamente uma change ativa, ela é usada. O cód
 agentic-fy status [--json]
 ```
 
-Panorama das changes ativas: quantas existem, em que estágio estão e quanto falta. Para cada change mostra o status, o progresso de tarefas e um resumo de problemas (`ok`, `N aviso(s)` ou `N erro(s)`, vindos da mesma checagem do `validate`). Útil como visão geral antes de decidir no que trabalhar.
+Overview of the active changes: how many there are, what stage they're in, and how much is left. For each change it shows the status, task progress, and a summary of issues (`ok`, `N warning(s)`, or `N error(s)`, from the same check as `validate`). Useful as a bird's-eye view before deciding what to work on.
 
 ## config
 
 ```bash
 agentic-fy config show [--json]
-agentic-fy config set <chave> <valor>
+agentic-fy config set <key> <value>
 ```
 
-Lê ou edita o `agentic-fy.config.yaml`.
+Reads or edits `agentic-fy.config.yaml`.
 
-- `config show` — mostra `version`, `schema` e o `workflow`.
-- `config set <chave> <valor>` — altera um valor. Chaves editáveis: `version` (inteiro positivo) e `schema`. O valor é validado pelo schema antes de gravar, então nunca se escreve uma config inválida.
+- `config show` — shows `version`, `schema`, and the `workflow`.
+- `config set <key> <value>` — changes a value. Editable keys: `version` (positive integer) and `schema`. The value is validated against the schema before saving, so invalid config is never written.
 
 ## doctor
 
@@ -171,14 +191,14 @@ Lê ou edita o `agentic-fy.config.yaml`.
 agentic-fy doctor [--json]
 ```
 
-Verifica a integridade do projeto (somente leitura, não repara nada):
+Checks the project's integrity (read-only, repairs nothing):
 
-- `agentic-fy.config.yaml` existe e é válido;
-- diretórios em `changes/` sem `.agentic-fy.yaml` (não são changes válidas) — `WARNING`;
-- changes com metadata ilegível — `ERROR`;
-- erros estruturais dos artefatos (ex.: `tasks.md` sem checkbox) — `ERROR`.
+- `agentic-fy.config.yaml` exists and is valid;
+- directories in `changes/` without `.agentic-fy.yaml` (not valid changes) — `WARNING`;
+- changes with unreadable metadata — `ERROR`;
+- structural errors in artifacts (e.g. `tasks.md` with no checkbox) — `ERROR`.
 
-O código de saída é `1` quando há algum `ERROR`. Diferente do `validate` (focado no preenchimento de uma change), o `doctor` olha a consistência do projeto inteiro.
+The exit code is `1` when there's any `ERROR`. Unlike `validate` (focused on a change's content), `doctor` looks at the consistency of the whole project.
 
 ## context
 
@@ -186,7 +206,7 @@ O código de saída é `1` quando há algum `ERROR`. Diferente do `validate` (fo
 agentic-fy context [--json]
 ```
 
-Reúne num só lugar o contexto do projeto: config (schema e workflow), as changes ativas com estágio e progresso, e as specs do projeto. Pensado para alimentar um agente de IA com o estado inteiro de uma vez. Em texto sai como um brief legível; com `--json`, estruturado.
+Gathers the project context in one place: config (schema and workflow), the active changes with stage and progress, and the project specs. Designed to feed an AI agent the whole state at once. As text it's a readable brief; with `--json`, structured.
 
 ## completion
 
@@ -194,13 +214,21 @@ Reúne num só lugar o contexto do projeto: config (schema e workflow), as chang
 agentic-fy completion [shell]
 ```
 
-Imprime no stdout um script de autocompletar para o shell (`powershell`, `bash` ou `zsh`). Se o shell não for informado, tenta detectar pelo ambiente. Não instala nada automaticamente — você redireciona para onde preferir:
+Prints an autocompletion script for the shell (`powershell`, `bash`, or `zsh`) to stdout. If the shell isn't given, it tries to detect it from the environment. It doesn't install anything automatically — redirect it wherever you prefer:
 
 ```bash
 agentic-fy completion bash >> ~/.bashrc     # Bash
 agentic-fy completion zsh  >> ~/.zshrc      # Zsh
-agentic-fy completion powershell            # PowerShell: cole no seu $PROFILE
+agentic-fy completion powershell            # PowerShell: paste into your $PROFILE
 ```
+
+## ticket
+
+```bash
+agentic-fy ticket [--print]
+```
+
+Opens the agentic-fy **new issue** page on GitHub so you can file a bug report or feature request. It opens the URL in your default browser using the OS's native handler (no extra dependency). Use `--print` to only print the URL instead of opening it (useful in CI or over SSH); if a browser can't be opened, the URL is printed as a fallback.
 
 ## view
 
@@ -208,12 +236,12 @@ agentic-fy completion powershell            # PowerShell: cole no seu $PROFILE
 agentic-fy view [--static] [--json]
 ```
 
-Dashboard de specs e changes. Mostra um resumo (contagem de changes/specs e progresso total de tarefas) e agrupa as changes por estágio: rascunhos (`exploring`/`proposed`), em andamento (`applying`, com barra de progresso) e prontas (`verified`).
+A dashboard of specs and changes. It shows a summary (change/spec counts and overall task progress) and groups the changes by stage: drafts (`exploring`/`proposed`), in progress (`applying`, with a progress bar), and done (`verified`).
 
-Modos:
-- **Interativo** (padrão, quando há terminal): além do painel, lista os itens numerados; digite o número para abrir o detalhe de uma change ou o conteúdo de uma spec, `r` para atualizar e `q` para sair.
-- `--static` — imprime o painel uma vez e sai (sem navegação). É o modo usado automaticamente quando não há terminal interativo (ex.: pipes, CI).
-- `--json` — devolve os dados do dashboard estruturados.
+Modes:
+- **Interactive** (default, when there's a terminal): besides the panel, it lists the items numbered; type the number to open a change's detail or a spec's content, `r` to refresh, and `q` to quit.
+- `--static` — prints the panel once and exits (no navigation). This is the mode used automatically when there's no interactive terminal (e.g. pipes, CI).
+- `--json` — returns the dashboard data structured.
 
 ## mcp
 
@@ -221,28 +249,28 @@ Modos:
 agentic-fy mcp
 ```
 
-Inicia o servidor MCP (Model Context Protocol) via stdio, expondo os comandos como ferramentas consumíveis por um agente de IA. Ferramentas registradas: `explore`, `propose`, `apply`, `verify`, `archive`, `list`, `show`, `validate`, `status`, `context`.
+Starts the MCP (Model Context Protocol) server over stdio, exposing the commands as tools an AI agent can consume. Registered tools: `explore`, `propose`, `apply`, `verify` (accepts `allowGaps`), `merge` and `archive` (both accept `dryRun`), `list`, `show`, `validate`, `status`, `context`, `doctor`, and `config` (read-only).
 
-### Conectar ao Kiro
+### Connect to Kiro
 
-Crie (ou edite) o arquivo de configuração MCP do Kiro:
-- Workspace (só este projeto): `.kiro/settings/mcp.json`
-- Usuário (todos os projetos): `~/.kiro/settings/mcp.json`
+Create (or edit) Kiro's MCP configuration file:
+- Workspace (this project only): `.kiro/settings/mcp.json`
+- User (all projects): `~/.kiro/settings/mcp.json`
 
 ```json
 {
   "mcpServers": {
     "agentic-fy": {
       "command": "npx",
-      "args": ["-y", "agentic-fy", "mcp"],
+      "args": ["-y", "@agentic-fy/agentic-fy", "mcp"],
       "disabled": false,
-      "autoApprove": ["explore"]
+      "autoApprove": ["explore", "list", "show", "validate"]
     }
   }
 }
 ```
 
-Se o `agentic-fy` estiver instalado globalmente, você pode usar o binário direto:
+If `agentic-fy` is installed globally, you can use the binary directly:
 
 ```json
 {
@@ -251,16 +279,21 @@ Se o `agentic-fy` estiver instalado globalmente, você pode usar o binário dire
       "command": "agentic-fy",
       "args": ["mcp"],
       "disabled": false,
-      "autoApprove": ["explore"]
+      "autoApprove": ["explore", "list", "show", "validate"]
     }
   }
 }
 ```
 
-`autoApprove: ["explore"]` deixa a ferramenta de leitura rodar sem confirmação; as demais de leitura (`list`, `show`, `validate`, `status`, `context`) também podem ser incluídas. As que escrevem (`propose`, `apply`, `archive`) continuam pedindo aprovação.
+`autoApprove` lets the read-only tools run without confirmation; the ones that write (`propose`, `apply`, `merge`, `archive`) still ask for approval.
 
-### Conectar a outros editores
+### Connect to other editors
 
-Editores baseados em VS Code com suporte a MCP usam o mesmo formato, mudando o arquivo:
+VS Code-based editors with MCP support use the same format, changing the file:
 - **Cursor**: `.cursor/mcp.json`
-- **GitHub Copilot (VS Code)**: `.vscode/mcp.json` (usa a chave `servers` em vez de `mcpServers`)
+- **GitHub Copilot (VS Code)**: `.vscode/mcp.json` (uses the `servers` key instead of `mcpServers`)
+- **Claude Code**: `.mcp.json`
+- **Windsurf**: `.windsurf/mcp.json`
+- **OpenCode**: `opencode.json` (uses its own `mcp` key with a local-server entry: `{ "type": "local", "command": ["npx", "-y", "@agentic-fy/agentic-fy", "mcp"] }`)
+- **Kimi Code**: `.kimi-code/mcp.json` (standard `mcpServers` shape; also supports a global `~/.kimi-code/mcp.json`)
+- **Zed**: `.zed/settings.json` (uses the `context_servers` key instead of `mcpServers`)

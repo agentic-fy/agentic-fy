@@ -1,3 +1,5 @@
+import { createRequire } from 'module';
+
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
@@ -16,8 +18,15 @@ import { listChangeSummaries, showChange, readChangeArtifact } from '../core/ins
 import { validateChange, type ValidationReport } from '../core/validate.js';
 import { projectStatus } from '../core/status.js';
 import { projectContext, renderContext } from '../core/context.js';
+import { runDoctor, type DoctorReport } from '../core/doctor.js';
+import { readProjectConfig } from '../core/change.js';
 import { nearestMatches } from '../core/match.js';
 import { CHANGE_ARTIFACTS, type ChangeArtifact } from '../core/schema.js';
+
+// Single source of truth for the version: read it from package.json instead of
+// hardcoding it here (which drifted out of sync with the published package).
+const require = createRequire(import.meta.url);
+const { version: PACKAGE_VERSION } = require('../../package.json') as { version: string };
 
 /**
  * Converts a WorkflowResult into the MCP tool return format.
@@ -52,6 +61,15 @@ async function resolveChangeName(root: string, name: string): Promise<string> {
   throw new Error(`Change "${name}" not found.${hint}`);
 }
 
+/** Renders a doctor report as readable text for the agent. */
+function renderDoctor(report: DoctorReport): string {
+  const lines = [report.healthy ? '✓ project healthy' : '✗ project has issues'];
+  for (const f of report.findings) {
+    lines.push(`  [${f.level}] ${f.scope}: ${f.message}`);
+  }
+  return lines.join('\n');
+}
+
 /** Renders a validation report as readable text for the agent. */
 function renderReport(report: ValidationReport): string {
   const lines = [
@@ -71,17 +89,18 @@ function renderReport(report: ValidationReport): string {
 export function createMcpServer(): McpServer {
   const server = new McpServer({
     name: 'agentic-fy',
-    version: '0.1.2',
+    version: PACKAGE_VERSION,
   });
 
   server.registerTool(
     'explore',
     {
       title: 'Explore',
-      description: 'Maps the problem and understands the codebase (thinking mode).',
-      inputSchema: {},
+      description:
+        'Maps the problem and the codebase. With a name, registers the change as "exploring".',
+      inputSchema: { name: z.string().optional().describe('Change name (optional; starts it as "exploring")') },
     },
-    async () => toToolResult(await runExplore())
+    async ({ name }) => toToolResult(await runExplore(name))
   );
 
   server.registerTool(
@@ -108,20 +127,31 @@ export function createMcpServer(): McpServer {
     'verify',
     {
       title: 'Verify',
-      description: 'Verifies the implementation against the spec.',
-      inputSchema: { name: z.string().optional().describe('Change name (optional)') },
+      description:
+        'Verifies the implementation against the spec, running each requirement\'s evidence command.',
+      inputSchema: {
+        name: z.string().optional().describe('Change name (optional)'),
+        allowGaps: z
+          .boolean()
+          .optional()
+          .describe('Accept requirements that declare no verify command (gaps)'),
+      },
     },
-    async ({ name }) => toToolResult(await runVerify(name))
+    async ({ name, allowGaps }) =>
+      toToolResult(await runVerify(name, process.cwd(), { allowGaps }))
   );
 
   server.registerTool(
     'archive',
     {
       title: 'Archive',
-      description: 'Archives the completed change.',
-      inputSchema: { name: z.string().optional().describe('Change name (optional)') },
+      description: 'Merges the change spec deltas into the project specs, then archives the change.',
+      inputSchema: {
+        name: z.string().optional().describe('Change name (optional)'),
+        dryRun: z.boolean().optional().describe('Preview the spec merge without writing or archiving'),
+      },
     },
-    async ({ name }) => toToolResult(await runArchive(name))
+    async ({ name, dryRun }) => toToolResult(await runArchive(name, process.cwd(), { dryRun }))
   );
 
   server.registerTool(
@@ -130,9 +160,12 @@ export function createMcpServer(): McpServer {
       title: 'Merge',
       description:
         'Applies the change spec deltas into the project specs without archiving (early-sync).',
-      inputSchema: { name: z.string().optional().describe('Change name (optional)') },
+      inputSchema: {
+        name: z.string().optional().describe('Change name (optional)'),
+        dryRun: z.boolean().optional().describe('Preview the spec merge without writing'),
+      },
     },
-    async ({ name }) => toToolResult(await runMerge(name))
+    async ({ name, dryRun }) => toToolResult(await runMerge(name, process.cwd(), { dryRun }))
   );
 
   server.registerTool(
@@ -261,6 +294,40 @@ export function createMcpServer(): McpServer {
     async () => {
       const root = requireProjectRoot();
       return textResult(renderContext(await projectContext(root)));
+    }
+  );
+
+  server.registerTool(
+    'doctor',
+    {
+      title: 'Doctor',
+      description:
+        'Project integrity check (read-only): valid config, orphaned change dirs, structural errors.',
+      inputSchema: {},
+    },
+    async () => {
+      const root = requireProjectRoot();
+      return textResult(renderDoctor(await runDoctor(root)));
+    }
+  );
+
+  server.registerTool(
+    'config',
+    {
+      title: 'Config',
+      description: 'Shows the project configuration (agentic-fy.config.yaml).',
+      inputSchema: {},
+    },
+    async () => {
+      const root = requireProjectRoot();
+      const cfg = await readProjectConfig(root);
+      const text = [
+        'agentic-fy.config.yaml',
+        `  version:  ${cfg.version}`,
+        `  schema:   ${cfg.schema}`,
+        `  workflow: ${cfg.workflow.join(' → ')}`,
+      ].join('\n');
+      return textResult(text);
     }
   );
 

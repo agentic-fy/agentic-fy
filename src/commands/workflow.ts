@@ -10,6 +10,7 @@ import {
   runArchive,
   type WorkflowResult,
 } from '../core/workflow.js';
+import { startStep } from '../ui/spinner.js';
 
 function printResult(result: WorkflowResult): void {
   if (result.change) {
@@ -23,6 +24,31 @@ function printResult(result: WorkflowResult): void {
 }
 
 /**
+ * Runs a workflow action behind a spinner, then prints the detailed result.
+ *
+ * `label` is the in-progress text; `done` builds the ✓ summary from the result.
+ * `delay` defers the spinner so instant commands stay clean and the spinner
+ * only appears when the work actually waits (default 150ms; pass 0 for steps
+ * that always wait, like verify running evidence commands).
+ */
+async function withSpinner(
+  label: string,
+  work: () => Promise<WorkflowResult>,
+  done: (result: WorkflowResult) => string,
+  delay = 150
+): Promise<void> {
+  const spinner = startStep(label, { delay });
+  try {
+    const result = await work();
+    spinner.succeed(done(result));
+    printResult(result);
+  } catch (error) {
+    spinner.fail(label.replace(/\.\.\.$/, '') + ' failed');
+    throw error;
+  }
+}
+
+/**
  * Registers the 5 workflow commands. Each handler simply delegates to the
  * corresponding pure function in core/workflow.ts and formats the output.
  */
@@ -31,11 +57,15 @@ export function registerWorkflowCommands(
   failWithError: (error: unknown) => void
 ): void {
   program
-    .command('explore')
-    .description('Maps the problem and understands the codebase (thinking mode)')
-    .action(async () => {
+    .command('explore [name]')
+    .description('Maps the problem and the codebase; with a name, starts a change as "exploring"')
+    .action(async (name?: string) => {
       try {
-        printResult(await runExplore());
+        await withSpinner(
+          'Exploring...',
+          () => runExplore(name),
+          (r) => (r.change ? `Exploring ${r.change} (${r.status})` : 'Explored')
+        );
       } catch (error) {
         failWithError(error);
         process.exit(1);
@@ -47,7 +77,11 @@ export function registerWorkflowCommands(
     .description('Creates the change and drafts proposal.md, specs/, design.md, tasks.md')
     .action(async (name: string) => {
       try {
-        printResult(await runPropose(name));
+        await withSpinner(
+          'Proposing...',
+          () => runPropose(name),
+          (r) => `Proposed ${r.change}`
+        );
       } catch (error) {
         failWithError(error);
         process.exit(1);
@@ -59,7 +93,11 @@ export function registerWorkflowCommands(
     .description('Implements the tasks in tasks.md')
     .action(async (name?: string) => {
       try {
-        printResult(await runApply(name));
+        await withSpinner(
+          'Applying...',
+          () => runApply(name),
+          (r) => `Applying ${r.change}`
+        );
       } catch (error) {
         failWithError(error);
         process.exit(1);
@@ -72,7 +110,13 @@ export function registerWorkflowCommands(
     .option('--allow-gaps', 'Accept requirements that declare no verify command (gaps)')
     .action(async (name: string | undefined, options: { allowGaps?: boolean }) => {
       try {
-        printResult(await runVerify(name, process.cwd(), { allowGaps: options.allowGaps }));
+        // delay 0: verify runs evidence commands, so it genuinely waits.
+        await withSpinner(
+          'Verifying (running evidence)...',
+          () => runVerify(name, process.cwd(), { allowGaps: options.allowGaps }),
+          (r) => `Verify ${r.change}: ${r.status}`,
+          0
+        );
       } catch (error) {
         failWithError(error);
         process.exit(1);
@@ -85,7 +129,11 @@ export function registerWorkflowCommands(
     .option('--dry-run', 'Preview the spec merge without writing')
     .action(async (name: string | undefined, options: { dryRun?: boolean }) => {
       try {
-        printResult(await runMerge(name, process.cwd(), { dryRun: options.dryRun }));
+        await withSpinner(
+          options.dryRun ? 'Merging (dry run)...' : 'Merging...',
+          () => runMerge(name, process.cwd(), { dryRun: options.dryRun }),
+          (r) => `Merged ${r.change}`
+        );
       } catch (error) {
         failWithError(error);
         process.exit(1);
@@ -98,7 +146,11 @@ export function registerWorkflowCommands(
     .option('--dry-run', 'Preview the spec merge without writing or archiving')
     .action(async (name: string | undefined, options: { dryRun?: boolean }) => {
       try {
-        printResult(await runArchive(name, process.cwd(), { dryRun: options.dryRun }));
+        await withSpinner(
+          options.dryRun ? 'Archiving (dry run)...' : 'Archiving...',
+          () => runArchive(name, process.cwd(), { dryRun: options.dryRun }),
+          (r) => `Archived ${r.change}`
+        );
       } catch (error) {
         failWithError(error);
         process.exit(1);

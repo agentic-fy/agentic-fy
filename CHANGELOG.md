@@ -1,231 +1,37 @@
 # Changelog
 
-All notable changes to this project are documented here.
+All notable changes to this project are documented in this file.
 
-The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and the project adheres to semantic versioning ([SemVer](https://semver.org/)).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.9] - 2026-09-30
+## [Unreleased]
 
-Convergence loop. `verify` now closes the loop: when evidence fails or a
-requirement has no proof, the change enters a `converging` state and `verify`
-reports an actionable plan (what to fix for each requirement) instead of a flat
-pass/fail.
+## [0.3.0]
 
 ### Added
 
-- **`converging` state** — a change that ran `verify` but still has failing or
-  unproven requirements is persisted as `converging` (visible in `status`,
-  `list`, and a dedicated section in `view`), rather than silently staying
-  `applying`.
-- **Convergence plan in `verify`** — each unmet requirement names its next
-  action (`→ fix the implementation` / `→ add a verify command`), followed by a
-  one-line summary of what remains. The loop is: verify → fix → verify, until
-  everything is proven (then `verified`).
-
-## [0.1.8] - 2026-09-30
-
-### Added
-
-- **OpenCode support** — `init --tools opencode` now configures OpenCode. It
-  writes `opencode.json` using OpenCode's own MCP shape (the `mcp` key with a
-  `{ "type": "local", "command": ["npx", "-y", "@agentic-fy/agentic-fy", "mcp"] }`
-  entry and a `$schema`), and generates the slash commands / skills under
-  `.opencode`.
-- **Kimi Code support** — `init --tools kimi` now configures Kimi Code. It writes
-  the project-level `.kimi-code/mcp.json` (standard `mcpServers` shape) and
-  generates the slash commands / skills under `.kimi-code`.
-- **Zed support** — `init --tools zed` now configures Zed. It writes
-  `.zed/settings.json` using Zed's `context_servers` key (standard
-  `{ command, args }` shape) and generates the slash commands / skills under `.zed`.
+- **`explore <name>` now starts a change.** With a name, `explore` registers the change in the `exploring` state so it exists while you map the problem, before `propose` drafts the artifacts. Without a name it stays stateless (lists active changes). Exposed on both the CLI and the MCP server.
+- **MCP parity with the CLI.** The MCP server now mirrors the CLI surface: `verify` accepts `allowGaps`, `merge` and `archive` accept `dryRun`, and two new tools are exposed — `doctor` (project integrity) and `config` (read-only view of the project configuration).
+- **Slash commands / skills for `merge`, `validate`, and `status`.** `init` now generates command/skill files for these too, so AI agents discover the full workflow (early-sync and inspection), not just the five core steps.
+- **Progress feedback for `init`.** `init` now shows a per-phase step indicator (structure → config → tools → skills) that resolves to a check mark, followed by the detailed report. A dependency-free spinner animates only on a TTY and only when a phase actually takes time (grace period), so fast runs stay clean and there is no artificial delay.
+- **Progress feedback for the workflow commands.** `explore`, `propose`, `apply`, `merge`, and `archive` run behind the same spinner (shown only if the work outlasts a short grace period); `verify` shows it immediately, since it waits on evidence commands.
+- **Logo on every `init` path.** The agentic-fy banner now appears whether `init` runs the interactive prompt or a non-interactive path (`--tools ...`, no TTY), without ever printing the logo twice.
+- **`ticket` command.** Opens the project's GitHub "new issue" page in the browser for a bug report or feature request; `--print` only prints the URL (CI/headless), and it falls back to printing the URL when a browser can't be opened. No new dependency — it uses the OS's native opener.
+- **Test suite (vitest).** Added unit tests for the core (spec merge engine, YAML delta parser, spec markdown round-trip, Levenshtein suggestions, task parser) and command-level tests that drive the full workflow (`init → explore → propose → apply → verify → merge → archive`) on disk in a temp directory.
 
 ### Changed
 
-- MCP entry generation now uses a per-format builder map (`standard` /
-  `opencode`), typed by `McpFormat`, so adding a tool with a new config shape is
-  a single map entry.
+- **Tool selection in `init` is now single-select.** The interactive prompt chooses one AI tool with ↑/↓ to move the highlight and Enter to confirm (the filled square marks the cursor line). This replaces the space-to-toggle multi-select, which silently failed on terminals that don't deliver the spacebar to a raw-mode process (WSL, Git Bash/MSYS). To configure several tools at once, use `--tools kiro,cursor`.
+- **Robust terminal input.** The prompt reads raw stdin bytes (arrows/Enter/Esc) instead of readline keypress events, and falls back to a numeric prompt on terminals where raw-mode keystrokes aren't reliably delivered (Git Bash/MSYS/Cygwin on Windows).
+- **Selection marker restyled** to a filled/empty square (`◼`/`◻`), with the unselected rows dimmed.
+- Moved the internal `resolveSingleChange` helper into `core/change.ts` (next to the other change helpers) and exported it, removing duplication.
 
 ### Fixed
 
-- The generated MCP config now points to the correct package name
-  (`@agentic-fy/agentic-fy`) instead of the unscoped `agentic-fy`.
+- **Spec round-trip losing the statement.** `parseSpec` dropped a requirement's statement when it was immediately followed by a `verify` line, because a blank line between the statement and the verify/scenario blocks triggered a second flush that wiped the already-captured text. The statement is now preserved, so render → parse → render is stable.
+- **MCP server version was hardcoded.** The server reported a stale, hardcoded version; it now reads the real version from `package.json`, matching the published package.
+- **Double logo on `init`.** Removed a path that could render the banner twice.
 
-## [0.1.7] - 2026-09-24
-
-Command-based evidence. `verify` no longer just checks that boxes are ticked:
-each requirement can declare a command that proves it, and `verify` runs those
-commands. This is the differentiator — an agent cannot mark a requirement done
-without an executable proof.
-
-### Added
-
-- **Evidence (command-only)**
-  - A requirement can declare a `verify` command in its spec delta
-    (`add.verify` or `modify.set.verify`); it renders in the consolidated spec
-    as `> verify: \`<command>\``.
-  - `verify [name] [--allow-gaps]` consolidates the change's deltas, then runs
-    each requirement's command (exit 0 = proven), with a timeout. It reports
-    per requirement (`proven` / `failed` / `no evidence`) and only marks the
-    change `verified` when nothing fails and there are no gaps — unless
-    `--allow-gaps` is passed. There is no self-declared "manual" evidence: a
-    requirement without a command is an honest, visible gap.
-  - `view` gained an `Evidence: x/y` line with a progress bar in the summary
-    (dashboard-safe: it counts declared commands without executing them).
-
-## [0.1.6] - 2026-09-22
-
-Early-sync of specs. A new `merge` command applies a change's spec deltas into
-the project's consolidated specs without archiving the change, so the specs
-(and the context an AI agent reads) stay current while work is in progress.
-
-### Added
-
-- **`merge [name] [--dry-run]`**
-  - Applies the change's `specs/*.delta.yaml` into
-    `agentic-fy/specs/<capability>.md` and keeps the change active (no archive).
-  - Idempotent and fail-loud, reusing the same merge engine as `archive`.
-    `--dry-run` previews the result without writing.
-  - Exposed as an MCP tool (`merge`) alongside the other workflow tools.
-
-### Changed
-
-- The dashboard summary (`view`) now lists one metric per line
-  (`Changes` / `Merged` / `Specs` / `Tasks`) with a bracketed task-progress bar.
-
-## [0.1.4] - 2026-09-22
-
-Structured spec deltas and consolidated specs. Changes now describe how they
-modify a capability through a YAML delta, and `archive` merges those deltas into
-the project's living specs. A deliberately better take on the reference project's
-markdown-delta model: structured, schema-validated, and fail-loud.
-
-### Added
-
-- **Spec deltas (YAML)**
-  - `propose` now drafts `specs/<change>.delta.yaml` (instead of a full spec
-    markdown), with operations `add` / `modify` / `remove` that reference
-    requirements by a **stable id** (independent of the title).
-- **Consolidated specs + merge on archive**
-  - `archive` applies each delta into `agentic-fy/specs/<capability>.md`
-    (readable markdown), then archives the change. The merge is deterministic
-    (remove -> modify -> add), idempotent, and fails loudly on a `modify` of a
-    missing id or an `add` that collides with different content.
-  - `archive --dry-run` previews the merge without writing or archiving.
-- **Validation of deltas**
-  - `validate` now parses `specs/*.delta.yaml`: malformed YAML or an invalid
-    structure is a hard error (never silent); an untouched delta template is a
-    warning.
-- **Dashboard progress**
-  - `view` gained a summary progress bar and a `Merged` count
-    (`Changes · Merged · Specs · Tasks` + a task-progress bar).
-
-### Changed
-
-- The `spec-driven` schema's `specs` instruction now documents the YAML delta
-  format instead of the markdown ADDED/MODIFIED/REMOVED/RENAMED sections.
-
-### Improved over the reference model
-
-- Requirements carry a stable `id`, so renaming is just a `modify` of the title
-  (no special rename operation) and references never break.
-- `modify` is a partial patch (`set` / `addScenarios` / `removeScenarios`), so
-  you never recopy a whole requirement and never silently drop a scenario.
-- Deltas are validated by schema, eliminating the "fails silently" markdown
-  parsing pitfalls.
-
-## [0.1.3] - 2026-09-22
-
-Per-tool slash commands and skills. Beyond the MCP integration, `init` now
-writes markdown command and skill files into the repo so AI tools (Claude Code,
-Cursor, Kiro, GitHub Copilot, Windsurf) register agentic-fy commands and
-auto-invocable skills. Non-destructive and idempotent, with no new dependencies.
-
-### Added
-
-- **Slash commands & skills generation**
-  - `init` now generates, for each selected tool that reads them, the workflow
-    commands (`explore`, `propose`, `apply`, `verify`, `archive`) as files:
-    - commands at `<tool>/commands/agentic-fy/<id>.md` (namespaced tools, e.g.
-      Claude Code -> `/agentic-fy:propose`) or `<tool>/commands/agentic-fy-<id>.md`
-      (flat tools, e.g. Cursor -> `/agentic-fy-propose`);
-    - skills at `<tool>/skills/agentic-fy-<id>/SKILL.md`, each with `name`,
-      `description`, and `allowed-tools` frontmatter.
-  - Command/skill bodies guide the agent through the loop and hand off to the
-    next step; the command invocation form is rewritten per tool.
-  - Generation is non-destructive and idempotent: files are only written when
-    their content changes, so re-running `init` and manual edits are preserved.
-
-### Changed
-
-- `init` now reports a "Commands & skills" section alongside the MCP setup,
-  listing how many command and skill files were written per tool.
-- The tool catalog carries the skill/command surface per tool (`skillsDir` and
-  the namespaced/flat invocation style).
-
-## [0.1.2] - 2026-09-21
-
-CLI consolidation: beyond the workflow loop, agentic-fy now inspects,
-validates, and visualizes the project, and integrates AI tools via MCP during
-`init`. Everything rewritten in a lean way, with no new dependencies.
-
-### Added
-
-- **Inspection**
-  - `list` — lists active changes (`--specs`, `--long`, `--json`).
-  - `show <name>` — shows a change, an artifact (`--artifact`), or a spec
-    (`--spec`); suggests close names when the name doesn't match ("did you mean?").
-  - `status` — overview of changes by stage, with progress and issues.
-  - `context` — gathers config, changes, and specs into a brief for the agent.
-  - `view` — specs and changes dashboard, interactive in the terminal (navigation
-    by number via native readline) and with a `--static`/`--json` mode.
-- **Validation and integrity**
-  - `validate [name]` — validates the artifacts of a change (`--all`, `--strict`,
-    `--json`): detects missing artifacts, untouched templates, empty bodies, and
-    `tasks.md` without a real checkbox.
-  - `doctor` — project integrity check (config, change metadata,
-    orphaned directories, consistent artifacts).
-- **Configuration**
-  - `config show` / `config set` — reads and edits `agentic-fy.config.yaml`, validating
-    against the schema before writing.
-- **AI tool integration in `init`**
-  - Interactive tool selection (with detected tools pre-selected) and the
-    `--tools all|none|<list>` flag for non-interactive mode.
-  - **Non-destructive and idempotent** generation/merge of each tool's `mcp.json`
-    (Kiro, Cursor, GitHub Copilot, Claude Code, Windsurf), pointing to
-    `agentic-fy mcp`.
-- **Autocompletion**
-  - `completion [shell]` — prints an autocompletion script for PowerShell,
-    Bash, or Zsh, without installing anything automatically.
-- **MCP**
-  - New tools exposed by the MCP server: `list`, `show`, `validate`,
-    `status`, and `context` (in addition to the workflow ones).
-
-### Changed
-
-- `init` no longer only creates the base structure: it now also configures the
-  MCP integration for the chosen tools (keeping idempotency).
-- Documentation (`docs/commands.md` and `docs/getting-started.md`) updated to
-  cover all commands and the MCP integration.
-
-### Kept lean (out of scope by design)
-
-Features from the reference project that were **not** brought in, to preserve the
-minimalist proposal: multi-repository planning (stores/worksets),
-profiles, migration/legacy, and telemetry. (The spec deltas model was later
-added in 0.1.4, in a leaner YAML form.)
-
-## [0.1.1] - 2026-09
-
-- Core of the spec-driven workflow: `init`, `explore`, `propose`, `apply`,
-  `verify`, `archive`.
-- MCP server (`mcp`) exposing the workflow tools via stdio.
-- Base project structure (`agentic-fy.config.yaml` + `agentic-fy/`).
-
-[0.1.9]: #019---2026-09-30
-[0.1.8]: #018---2026-09-30
-[0.1.7]: #017---2026-09-24
-[0.1.6]: #016---2026-09-22
-[0.1.4]: #014---2026-09-22
-[0.1.3]: #013---2026-09-22
-[0.1.2]: #012---2026-09-21
-[0.1.1]: #011---2026-09
+[Unreleased]: https://github.com/agentic-fy/agentic-fy/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/agentic-fy/agentic-fy/releases/tag/v0.3.0

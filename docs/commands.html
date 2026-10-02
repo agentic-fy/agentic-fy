@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Commands — agentic-fy</title>
-  <meta name="description" content="Reference for every agentic-fy CLI command: init, explore, propose, apply, verify, archive, list, show, validate, status, doctor, context, config, completion, view, and mcp." />
+  <meta name="description" content="Reference for every agentic-fy CLI command: init, explore, propose, apply, verify, merge, archive, list, show, validate, status, doctor, context, config, completion, ticket, view, and mcp." />
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body>
@@ -65,9 +65,12 @@ agentic-fy/
       <code>mcp.json</code> merge is non-destructive: an existing config keeps its other servers.</p>
 
       <h2>explore</h2>
-      <pre><code>agentic-fy explore</code></pre>
-      <p>Thinking mode. Confirms an agentic-fy project exists and lists the active changes with their status.
-      It doesn't create or change anything — it's a starting point to map the problem before proposing.</p>
+      <pre><code>agentic-fy explore [name]</code></pre>
+      <p>Thinking mode to map the problem before proposing. Without a name, it confirms an agentic-fy project
+      exists and lists the active changes with their status — it doesn't create or change anything. With a
+      <code>name</code>, it registers the change in the <code>exploring</code> state, so the change exists
+      while you're still mapping the problem (before <code>propose</code> drafts its artifacts). It is
+      idempotent: re-exploring an existing change is safe.</p>
 
       <h2>propose</h2>
       <pre><code>agentic-fy propose &lt;name&gt;</code></pre>
@@ -156,6 +159,13 @@ agentic-fy config set &lt;key&gt; &lt;value&gt;</code></pre>
       <p>Prints an autocompletion script for <code>powershell</code>, <code>bash</code>, or <code>zsh</code>.
       It does not install anything automatically — pipe it into your shell config as you prefer.</p>
 
+      <h2>ticket</h2>
+      <pre><code>agentic-fy ticket [--print]</code></pre>
+      <p>Opens the agentic-fy <strong>new issue</strong> page on GitHub so you can file a bug report or
+      feature request. It opens the URL in your default browser using the OS's native handler (no extra
+      dependency). Use <code>--print</code> to only print the URL instead of opening it (useful in CI or over
+      SSH); if a browser can't be opened, it prints the URL as a fallback.</p>
+
       <h2>view</h2>
       <pre><code>agentic-fy view [--static] [--json]</code></pre>
       <p>A dashboard of specs and changes, with a summary
@@ -167,8 +177,10 @@ agentic-fy config set &lt;key&gt; &lt;value&gt;</code></pre>
       <pre><code>agentic-fy mcp</code></pre>
       <p>Starts the MCP (Model Context Protocol) server over stdio, exposing the workflow commands as tools
       an AI agent can consume. Registered tools: <code>explore</code>, <code>propose</code>,
-      <code>apply</code>, <code>verify</code>, <code>merge</code>, <code>archive</code>, <code>list</code>,
-      <code>show</code>, <code>validate</code>, <code>status</code>, and <code>context</code>.</p>
+      <code>apply</code>, <code>verify</code> (accepts <code>allowGaps</code>), <code>merge</code> and
+      <code>archive</code> (both accept <code>dryRun</code>), <code>list</code>, <code>show</code>,
+      <code>validate</code>, <code>status</code>, <code>context</code>, <code>doctor</code>, and
+      <code>config</code> (read-only).</p>
 
       <h3>Connect to Kiro</h3>
       <p>The easiest way is to let <code>agentic-fy init --tools kiro</code> configure it for you. To do it
