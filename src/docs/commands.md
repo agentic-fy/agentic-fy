@@ -38,9 +38,9 @@ How tools are chosen:
   - `--tools all` — configures every supported tool.
   - `--tools none` — configures none (just the base structure).
   - `--tools kiro,cursor` — configures only the listed ones.
-- **No TTY and no `--tools`** (CI, pipes): configures no tool and proceeds normally.
+- **No TTY** (CI, pipes): the prompt falls back to a numeric one; without `--tools` it configures no tool.
 
-> On terminals that don't deliver ordinary keystrokes to a raw-mode process (Git Bash/MSYS on Windows), the interactive prompt falls back to a numeric one. For several tools, prefer `--tools`.
+> For several tools at once, prefer `--tools kiro,cursor`.
 
 Supported tools: `kiro`, `cursor`, `github-copilot`, `claude`, `windsurf`, `kimi`, `zed`, `opencode`.
 

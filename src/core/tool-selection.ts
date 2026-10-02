@@ -107,29 +107,13 @@ const dim = (s: string) => paint('2', s);
 const bold = (s: string) => paint('1', s);
 
 /**
- * Some terminals report a TTY and accept `setRawMode`, but still don't deliver
- * ordinary keystrokes (space, letters) to the process — notably Git Bash /
- * MSYS2 / Cygwin on Windows, where only arrow escape sequences and Enter get
- * through. The keyboard multi-select is unusable there, so we detect those
- * environments and fall back to the numeric prompt (which only needs Enter).
- *
- * Detection is best-effort via the usual MSYS/Cygwin environment markers.
+ * Chooses which prompt to use. The single-select UI only needs ↑/↓ and Enter —
+ * keystrokes every terminal delivers reliably — so it's used whenever there's a
+ * raw-mode-capable TTY. The numeric prompt remains the fallback for the genuine
+ * no-TTY case (pipes, CI). Returns `null` when the user cancels (Esc / Ctrl-C).
  */
-function rawModeIsReliable(): boolean {
-  if (process.platform !== 'win32') return true;
-  const term = (process.env.TERM ?? '').toLowerCase();
-  // MSYSTEM is set by Git Bash/MSYS2 (e.g. MINGW64); TERM=cygwin on Cygwin.
-  if (process.env.MSYSTEM) return false;
-  if (term.includes('cygwin')) return false;
-  return true;
-}
-
-/** Chooses which prompt to use based on TTY raw-mode support. Returns `null`
- * when the user cancels (Esc / Ctrl-C). */
 async function promptForTools(preselected: AiTool[]): Promise<AiTool[] | null> {
-  const canRaw =
-    Boolean(process.stdin.isTTY && typeof process.stdin.setRawMode === 'function') &&
-    rawModeIsReliable();
+  const canRaw = Boolean(process.stdin.isTTY && typeof process.stdin.setRawMode === 'function');
   return canRaw ? promptInteractive(preselected) : promptNumeric(preselected);
 }
 
